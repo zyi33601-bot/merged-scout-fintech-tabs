@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attention Flagging · Costly Deviation Scanner</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #fbfaf7;
+        --ink: #101413;
+        --muted: #56615d;
+        --faint: #9aa39e;
+        --line: #e1e6e0;
+        --rule: #d4ddd7;
+        --accent: #12a37f;
+        --blue: #4f6f68;
+        --cream: #f4f7f3;
+        --serif: "Iowan Old Style", "Palatino Linotype", "Palatino", "Songti SC",
+          Georgia, serif;
+        --sans: "Helvetica Neue", "PingFang SC", "Hiragino Sans GB",
+          -apple-system, system-ui, sans-serif;
+        --mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, monospace;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        overflow: hidden;
+        background: #e6ece8;
+        color: var(--ink);
+        font-family: var(--sans);
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .deck {
+        width: min(100vw, calc(100vh * 16 / 9));
+        height: min(100vh, calc(100vw * 9 / 16));
+        position: relative;
+        overflow: hidden;
+        container-type: size;
+        background: var(--paper);
+        box-shadow: 0 12px 50px rgba(0, 0, 0, 0.18);
+      }
+
+      .track {
+        position: absolute;
+        inset: 0;
+      }
+
+      .slide {
+        position: absolute;
+        inset: 0;
+        height: 100%;
+        padding: 5cqw 7cqw 7cqw;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.45s ease;
+      }
+
+      .slide.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .kicker {
+        color: var(--accent);
+        font-size: 1.15cqw;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 2.2cqw;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        max-width: 68cqw;
+        font-family: var(--serif);
+        font-size: 6.4cqw;
+        line-height: 1.04;
+        letter-spacing: 0.005em;
+        font-weight: 600;
+      }
+
+      h2 {
+        max-width: 74cqw;
+        font-family: var(--serif);
+        font-size: 3.5cqw;
+        line-height: 1.16;
+        letter-spacing: 0.005em;
+        font-weight: 600;
+        margin-bottom: 2cqw;
+      }
+
+      h3 {
+        font-family: var(--serif);
+        font-size: 1.7cqw;
+        line-height: 1.2;
+        letter-spacing: 0;
+        font-weight: 600;
+      }
+
+      .lead {
+        max-width: 54cqw;
+        color: var(--muted);
+        font-size: 1.75cqw;
+        line-height: 1.56;
+      }
+
+      .lead.serif {
+        font-family: var(--serif);
+      }
+
+      .bigline {
+        max-width: 66cqw;
+        font-family: var(--serif);
+        font-size: 2.45cqw;
+        line-height: 1.28;
+        letter-spacing: 0;
+        font-weight: 600;
+      }
+
+      .content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 2.4cqw;
+        min-height: 0;
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 5cqw;
+        align-items: stretch;
+      }
+
+      .panel {
+        background: var(--cream);
+        border: 1px solid var(--line);
+        border-radius: 0.55cqw;
+        padding: 2.1cqw 2.3cqw;
+        min-height: 24cqw;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .panel.teal {
+        border-left: 0.24cqw solid var(--blue);
+      }
+
+      .panel.gold {
+        border-left: 0.24cqw solid var(--accent);
+        background: #eef7f2;
+      }
+
+      .tag {
+        width: fit-content;
+        color: var(--accent);
+        font-size: 0.92cqw;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+
+      .tag.gold {
+        color: var(--accent);
+      }
+
+      .panel-body {
+        display: grid;
+        gap: 1.3cqw;
+        color: var(--muted);
+        font-size: 1.32cqw;
+        line-height: 1.5;
+      }
+
+      .metric {
+        color: var(--ink);
+        font-family: var(--serif);
+        font-size: 2.2cqw;
+        line-height: 1.1;
+        letter-spacing: 0;
+        font-weight: 600;
+      }
+
+      .equation {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1cqw;
+      }
+
+      .eq-card {
+        min-height: 13cqw;
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 0.55cqw;
+        padding: 1.35cqw;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .eq-card b {
+        display: block;
+        font-family: var(--serif);
+        font-size: 1.75cqw;
+        line-height: 1.1;
+        font-weight: 600;
+      }
+
+      .eq-card span {
+        color: var(--muted);
+        font-size: 1.03cqw;
+        line-height: 1.45;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.85cqw;
+      }
+
+      .flow-step {
+        min-height: 15.5cqw;
+        border: 1px solid var(--line);
+        background: var(--cream);
+        border-radius: 0.55cqw;
+        padding: 1.3cqw;
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        gap: 0.8cqw;
+        position: relative;
+      }
+
+      .flow-step:not(:last-child)::after {
+        content: "→";
+        position: absolute;
+        right: -1cqw;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+        font-size: 1.35cqw;
+        z-index: 2;
+      }
+
+      .step-no {
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.86cqw;
+        letter-spacing: 0.12em;
+      }
+
+      .flow-step p,
+      .compact-list {
+        color: var(--muted);
+        font-size: 1.02cqw;
+        line-height: 1.45;
+      }
+
+      .compact-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .concept-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.25cqw;
+        margin-top: 0.8cqw;
+      }
+
+      .concept {
+        border-left: 0.22cqw solid var(--accent);
+        background: var(--cream);
+        padding: 1.35cqw 1.55cqw;
+      }
+
+      .concept .label {
+        font-family: var(--mono);
+        color: var(--accent);
+        font-size: 0.9cqw;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 0.8cqw;
+      }
+
+      .concept p {
+        color: var(--muted);
+        font-size: 1.16cqw;
+        line-height: 1.48;
+      }
+
+      .flag-grid {
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 4cqw;
+        align-items: center;
+      }
+
+      .flag-stack {
+        display: grid;
+        gap: 0.9cqw;
+      }
+
+      .flag {
+        border-left: 0.22cqw solid var(--line);
+        background: var(--cream);
+        padding: 1.1cqw 1.25cqw;
+        border-radius: 0.45cqw;
+        color: var(--muted);
+        font-size: 1.24cqw;
+      }
+
+      .flag.strong {
+        border-left-color: var(--accent);
+        color: var(--ink);
+        background: #fff;
+      }
+
+      .flag.weak {
+        opacity: 0.72;
+      }
+
+      .product-frame {
+        flex: 1;
+        height: 100%;
+        min-height: 0;
+        border: 1px solid var(--line);
+        border-radius: 0.55cqw;
+        background: white;
+        overflow: hidden;
+      }
+
+      .product-frame iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        display: block;
+        background: white;
+      }
+
+      .demo-slide {
+        padding: 2.1cqw 2.2cqw 4.2cqw;
+        justify-content: flex-start;
+        gap: 1.1cqw;
+      }
+
+      .demo-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        padding: 0;
+      }
+
+      .demo-head h2 {
+        font-size: 2.45cqw;
+        margin-bottom: 0;
+      }
+
+      .demo-entry {
+        max-width: 58cqw;
+        border-top: 2px solid var(--accent);
+        padding-top: 2.2cqw;
+        display: grid;
+        gap: 1.5cqw;
+      }
+
+      .demo-entry a {
+        width: fit-content;
+        color: var(--ink);
+        text-decoration: none;
+        border: 1px solid var(--line);
+        border-radius: 0.45cqw;
+        background: #fff;
+        padding: 0.8cqw 1.35cqw;
+        font-size: 1.05cqw;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .demo-entry a:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+
+      .bottom {
+        position: absolute;
+        left: 7cqw;
+        right: 7cqw;
+        bottom: 2.6cqw;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--faint);
+        font-size: 1.05cqw;
+        letter-spacing: 0.04em;
+      }
+
+      .nav {
+        position: fixed;
+        left: 50%;
+        bottom: 2.2vh;
+        transform: translateX(-50%);
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        gap: 1.2cqw;
+        padding: 0;
+        border: 0;
+        background: transparent;
+      }
+
+      .nav button {
+        width: 3.4cqw;
+        height: 3.4cqw;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--faint);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        font-size: 2.2cqw;
+        line-height: 1;
+      }
+
+      .nav button:hover {
+        color: var(--ink);
+      }
+
+      .counter {
+        min-width: 4.5cqw;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 1cqw;
+        color: var(--faint);
+        font-weight: 500;
+      }
+
+      .dots {
+        display: flex;
+        gap: 0.55cqw;
+        align-items: center;
+      }
+
+      .dot {
+        width: 0.55cqw;
+        height: 0.55cqw;
+        border-radius: 999px;
+        background: var(--rule);
+        cursor: pointer;
+      }
+
+      .dot.active {
+        width: 0.55cqw;
+        background: var(--ink);
+        transform: scale(1.5);
+      }
+
+      .accent {
+        color: var(--accent);
+      }
+
+      .nowrap {
+        white-space: nowrap;
+      }
+
+      .gold-text {
+        color: var(--gold);
+      }
+
+      .quote {
+        max-width: 78cqw;
+        font-family: var(--serif);
+        font-size: 4.8cqw;
+        line-height: 1.1;
+        letter-spacing: 0.005em;
+        font-weight: 600;
+      }
+
+      .small-note {
+        color: var(--muted);
+        font-size: 1.05cqw;
+        line-height: 1.5;
+      }
+
+      @media (max-width: 820px) {
+        body {
+          overflow: hidden;
+        }
+
+        .deck {
+          width: 100vw;
+          height: 100svh;
+        }
+
+        .slide {
+          padding: 34px 22px 76px;
+        }
+
+        .split,
+        .flag-grid,
+        .concept-row,
+        .equation,
+        .flow {
+          grid-template-columns: 1fr;
+        }
+
+        .flow {
+          max-height: 62vh;
+          overflow: auto;
+        }
+
+        .flow-step {
+          min-height: 160px;
+        }
+
+        .flow-step:not(:last-child)::after {
+          display: none;
+        }
+
+        .panel {
+          min-height: 260px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="deck" aria-label="Attention Flagging presentation">
+      <div id="track" class="track">
+        <section class="slide active">
+          <div class="kicker">01 / attention allocation</div>
+          <div class="content">
+            <h1>How <span class="nowrap">Information Gravity</span> Draws Our Attention</h1>
+            <p class="lead serif">
+              Attention and org signals pull each other. We search for signals that fit our taste; strong signals pull us back. The question is how to identify the modules with enough gravity to deserve attention.
+            </p>
+          </div>
+          <div class="bottom">
+            <span>Costly Deviation Scanner</span>
+            <span>Research Agent · Presentation Draft</span>
+          </div>
+        </section>
+
+        <section class="slide">
+          <div class="kicker">02 / information foraging</div>
+          <div class="content">
+            <h2>Information Foraging describes how attention moves while we search.</h2>
+            <p class="lead">
+              研究者不会平均阅读所有公开信息。我们会进入一个信息区域，判断线索是否足够强，再决定继续深挖、切换路径，或把它放进长期追踪清单。
+            </p>
+            <div class="concept-row">
+              <article class="concept">
+                <div class="label">Information Patches</div>
+                <h3>Where attention enters</h3>
+                <p>信息聚集的区域，例如网站、数据库、页面或一组搜索结果；当一个斑块里的边际收益下降，研究者会切换到下一个斑块。</p>
+              </article>
+              <article class="concept">
+                <div class="label">Information Scents</div>
+                <h3>What pulls attention forward</h3>
+                <p>页面上的线索，例如标题、链接文字、摘要或片段；研究者据此预测沿着这条路径继续找，能不能更接近答案。</p>
+              </article>
+              <article class="concept">
+                <div class="label">Information Diets</div>
+                <h3>What attention keeps</h3>
+                <p>在时间和注意力有限的条件下，研究者决定长期追踪哪些信息源、忽略哪些信息源，以及如何分配自己的信息摄入。</p>
+              </article>
+            </div>
+          </div>
+          <div class="bottom">
+            <span>Patches → Scents → Diets</span>
+            <span>← / → 翻页</span>
+          </div>
+        </section>
+
+        <section class="slide">
+          <div class="kicker">03 / concept map</div>
+          <div class="content">
+            <h2>三个理论术语，对应产品里的三个动作。</h2>
+            <div class="flow">
+              <article class="flow-step">
+                <span class="step-no">PATCHES</span>
+                <h3>去哪里找？</h3>
+                <p>先用 Costly Deviation Scanner 扫大量公司，识别哪些赛道反复出现组织偏离信号，值得切进去。</p>
+              </article>
+              <article class="flow-step">
+                <span class="step-no">SCENT</span>
+                <h3>什么值得追？</h3>
+                <p>偏离同类、有机制、有代价、可验证的组织信号。</p>
+              </article>
+              <article class="flow-step">
+                <span class="step-no">DIET</span>
+                <h3>留下什么？</h3>
+                <p>进入 cohort 后，把注意力留给那些看起来最值得下钻、最需要人类接管的公司。</p>
+              </article>
+              <article class="flow-step">
+                <span class="step-no">CARD</span>
+                <h3>如何接管？</h3>
+                <p>每家公司一页：为什么值得看、机制是什么、下一步验证什么。</p>
+              </article>
+              <article class="flow-step">
+                <span class="step-no">LOOP</span>
+                <h3>如何复利？</h3>
+                <p>继续识别哪些异常信号是好的 detector，让下一轮扫描更会分辨“真线索”和 table-stakes。</p>
+              </article>
+            </div>
+          </div>
+          <div class="bottom">
+            <span>Information Patches → Information Scent → Information Diet</span>
+            <span>03</span>
+          </div>
+        </section>
+
+        <section class="slide">
+          <div class="kicker">04 / scent strength</div>
+          <div class="content">
+            <h2>线索强度不是“奇怪程度”，而是继续深挖的预期收益。</h2>
+            <div class="equation">
+              <article class="eq-card">
+                <b>Deviation</b>
+                <span>和同类 baseline 不一样，而不是和全市场不一样。</span>
+              </article>
+              <article class="eq-card">
+                <b>Mechanism</b>
+                <span>能说清谁、怎么、多少、后果，而不只是一句 claim。</span>
+              </article>
+              <article class="eq-card">
+                <b>Costliness</b>
+                <span>会牺牲速度、制造流失、得罪人、绑定激励或暴露失败。</span>
+              </article>
+              <article class="eq-card">
+                <b>Evidence</b>
+                <span>有逐字原话、员工侧、第三方、硬数据或可复查来源。</span>
+              </article>
+            </div>
+            <p class="bigline">
+              <span class="accent">Costly Deviation</span> 是一种可执行的 scent detector。
+            </p>
+          </div>
+          <div class="bottom">
+            <span>Strong scent = deviation × mechanism clarity × costliness × evidence quality</span>
+            <span>04</span>
+          </div>
+        </section>
+
+        <section class="slide">
+          <div class="kicker">05 / two-layer scanner</div>
+          <div class="content">
+            <h2>先找高收益斑块，再在斑块内部重新校准。</h2>
+            <div class="split">
+              <article class="panel teal">
+                <div class="tag">Layer 1</div>
+                <div class="panel-body">
+                  <h3>Costly Deviation Scanner</h3>
+                  <p>用统一 baseline 扫全市场，识别哪些公司或赛道反复出现强组织线索。</p>
+                  <p class="metric">Where is the scent?</p>
+                </div>
+              </article>
+              <article class="panel gold">
+                <div class="tag gold">Layer 2</div>
+                <div class="panel-body">
+                  <h3>Cohort Deep Dive</h3>
+                  <p>进入赛道后，用 cohort baseline 替代通用 baseline，判断哪些偏离不是 table-stakes。</p>
+                  <p class="metric">Is it still special?</p>
+                </div>
+              </article>
+            </div>
+          </div>
+          <div class="bottom">
+            <span>Global scan first. Cohort calibration second.</span>
+            <span>05</span>
+          </div>
+        </section>
+
+        <section class="slide">
+          <div class="kicker">06 / fintech cohort</div>
+          <div class="content">
+            <h2>以在 Scanner 中反复出现的 Fintech 为例：组织设计来约束风险、速度和信任。</h2>
+            <div class="split">
+              <article class="panel teal">
+                <div class="panel-body">
+                  <h3>Commonplace</h3>
+                  <p>trust、compliance、customer obsession、high bar 在 fintech 里几乎都是 common claims。</p>
+                </div>
+                <p class="small-note">这些只能形成弱 scent，不能直接判为 outlier。</p>
+              </article>
+              <article class="panel gold">
+                <div class="panel-body">
+                  <h3>Outlier Edge</h3>
+                  <p>当合规影响奖金、人才筛变成硬淘汰、支付网络复杂度重塑团队边界，才进入强 scent 区间。</p>
+                </div>
+                <p class="small-note">赛道 baseline 让 scanner 不被 table-stakes 欺骗。</p>
+              </article>
+            </div>
+          </div>
+          <div class="bottom">
+            <span>Cohort baseline turns broad claims into sharper comparisons.</span>
+            <span>06</span>
+          </div>
+        </section>
+
+        <section class="slide">
+          <div class="kicker">07 / product demo</div>
+          <div class="content">
+            <h2>From theory to interface.</h2>
+            <div class="demo-entry">
+              <p class="lead">
+                下面进入实际产品：先看全市场 Costly Deviation Scanner 如何找到高收益斑块，再看 Fintech Cohort 如何用赛道 baseline 重新校准哪些公司值得继续下钻。
+              </p>
+              <a
+                href="https://zyi33601-bot.github.io/merged-scout-fintech-tabs/Information-Foraging/"
+                target="_blank"
+                rel="noopener"
+              >
+                Open live demo →
+              </a>
+            </div>
+          </div>
+          <div class="bottom">
+            <span>Scanner → Cohort → Company Cards</span>
+            <span>07</span>
+          </div>
+        </section>
+
+        <section class="slide">
+          <div class="kicker">08 / closing</div>
+          <div class="content">
+            <p class="quote">
+              Costly Deviation is not proof of greatness.
+              <br />
+              It is a disciplined reason to allocate attention.
+            </p>
+          </div>
+          <div class="bottom">
+            <span>Information flagging for investment research</span>
+            <span>08 / 08</span>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <nav class="nav" aria-label="Slide navigation">
+      <button id="prev" type="button" aria-label="Previous slide">‹</button>
+      <span id="counter" class="counter">1 / 11</span>
+      <div id="dots" class="dots" aria-hidden="true"></div>
+      <button id="next" type="button" aria-label="Next slide">›</button>
+    </nav>
+
+    <script>
+      const track = document.getElementById("track");
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const counter = document.getElementById("counter");
+      const dotsRoot = document.getElementById("dots");
+      const prev = document.getElementById("prev");
+      const next = document.getElementById("next");
+      let index = 0;
+
+      slides.forEach((_, i) => {
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        dot.addEventListener("click", () => go(i));
+        dotsRoot.appendChild(dot);
+      });
+
+      function go(nextIndex) {
+        index = Math.max(0, Math.min(slides.length - 1, nextIndex));
+        slides.forEach((slide, i) => {
+          slide.classList.toggle("active", i === index);
+        });
+        counter.textContent = `${index + 1} / ${slides.length}`;
+        Array.from(dotsRoot.children).forEach((dot, i) => {
+          dot.classList.toggle("active", i === index);
+        });
+      }
+
+      prev.addEventListener("click", () => go(index - 1));
+      next.addEventListener("click", () => go(index + 1));
+
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowRight" || event.key === " ") go(index + 1);
+        if (event.key === "ArrowLeft") go(index - 1);
+        if (event.key === "Home") go(0);
+        if (event.key === "End") go(slides.length - 1);
+      });
+
+      let touchStartX = null;
+      window.addEventListener("touchstart", (event) => {
+        touchStartX = event.touches[0].clientX;
+      });
+      window.addEventListener("touchend", (event) => {
+        if (touchStartX === null) return;
+        const delta = event.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(delta) > 48) go(index + (delta < 0 ? 1 : -1));
+        touchStartX = null;
+      });
+
+      go(0);
+    </script>
+  </body>
+</html>
