@@ -1,0 +1,964 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fintech Cohort · Org Deviation Scout</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f4;
+      --panel: #ffffff;
+      --panel-soft: #fbfbf8;
+      --ink: #20211f;
+      --muted: #6f706b;
+      --faint: #8c8d87;
+      --line: #deded8;
+      --line-strong: #c8c8c0;
+      --accent: #0f766e;
+      --accent-soft: #e7f4f1;
+      --green: #18794e;
+      --amber: #9a6700;
+      --purple: #6f42c1;
+      --shadow: 0 18px 55px rgba(31, 32, 29, .10);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.5 var(--sans);
+    }
+    body.compact header { display: none; }
+    body.compact .summary { display: none; }
+    .compact-meta {
+      display: none;
+      padding: 14px 26px 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    body.compact .compact-meta { display: block; }
+    a { color: inherit; }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 18px 26px 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(247, 247, 244, .94);
+      backdrop-filter: blur(12px);
+    }
+    h1 { margin: 0 0 3px; font-size: 19px; line-height: 1.25; letter-spacing: 0; }
+    .sub { color: var(--muted); font-size: 12.5px; }
+    .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+    #q {
+      flex: 1;
+      min-width: 230px;
+      height: 36px;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--ink);
+      font-size: 13px;
+      outline: none;
+    }
+    #q:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .chip, .top-action {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--muted);
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .chip.on, .top-action.primary {
+      border-color: #a8cfc8;
+      background: var(--accent-soft);
+      color: #0b5f58;
+      font-weight: 650;
+    }
+    .wrap { padding: 0 26px 58px; }
+    .summary {
+      display: grid;
+      grid-template-columns: minmax(280px, 1.25fr) repeat(4, minmax(124px, .7fr));
+      gap: 10px;
+      margin: 16px 0 8px;
+    }
+    .metric {
+      min-height: 86px;
+      padding: 14px 15px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 1px 0 rgba(31, 32, 29, .03);
+    }
+    .metric b { display: block; font-size: 25px; line-height: 1.05; font-variant-numeric: tabular-nums; }
+    .metric span { color: var(--muted); font-size: 12px; }
+    .thesis { margin: 6px 0 0; color: #454641; font-size: 13px; }
+    .table-panel {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid var(--line); padding: 9px 10px; text-align: left; vertical-align: top; }
+    th {
+      background: #f1f1ed;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    tbody tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: #fafaf7; }
+    td.n, td.s { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .co { font-weight: 680; }
+    .ol { margin-top: 2px; color: var(--muted); font-size: 12.5px; }
+    .score {
+      display: inline-block;
+      min-width: 34px;
+      padding: 1px 8px;
+      border-radius: 6px;
+      font-weight: 750;
+      text-align: center;
+      background: #f0f0ea;
+      color: var(--muted);
+    }
+    .score.hot { background: #e5f4e9; color: var(--green); }
+    .dir { font-weight: 750; }
+    .up { color: var(--green); }
+    .unknown { color: var(--amber); }
+    .conf {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      color: var(--muted);
+      background: var(--panel-soft);
+      padding: 1px 6px;
+      font: 11px/1.5 var(--mono);
+      white-space: nowrap;
+    }
+    .pri {
+      margin-left: 6px;
+      padding: 1px 6px;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 10.5px;
+      vertical-align: 1px;
+    }
+    .P0 { background: var(--purple); }
+    .Pending { background: #85857e; }
+    .lk {
+      border: 0;
+      background: none;
+      color: #0f6bca;
+      padding: 0;
+      font: inherit;
+      font-weight: 650;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .lk:hover { text-decoration: underline; }
+    .empty { display: none; padding: 30px; color: var(--muted); text-align: center; }
+    footer {
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      padding: 18px 26px;
+    }
+    #ov {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: rgba(35, 36, 32, .28);
+      backdrop-filter: blur(3px);
+    }
+    #ov.on { display: block; }
+    #modal {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100%;
+      width: 90vw;
+      overflow: auto;
+      overflow-x: hidden;
+      padding: 26px 34px 42px;
+      border-left: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: -22px 0 60px rgba(31, 32, 29, .14);
+      transform: translateX(100%);
+      transition: transform .18s ease;
+    }
+    #ov.on #modal { transform: none; }
+    #x {
+      position: sticky;
+      top: 0;
+      float: right;
+      z-index: 3;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .doc-title { margin: 0 42px 6px 0; font-size: 12px; color: var(--muted); }
+    .markdown { max-width: none; padding-bottom: 16px; }
+    .markdown h1 {
+      margin: 0 42px 16px 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+      font-size: 24px;
+      line-height: 1.25;
+    }
+    .markdown h2 { margin: 28px 0 10px; font-size: 18px; line-height: 1.3; }
+    .markdown h3 { margin: 20px 0 8px; font-size: 15px; line-height: 1.35; }
+    .markdown p { margin: 0 0 12px; color: #393a36; }
+    .markdown blockquote {
+      margin: 0 0 14px;
+      padding: 9px 12px;
+      border-left: 3px solid #a8cfc8;
+      border-radius: 0 7px 7px 0;
+      background: var(--accent-soft);
+      color: #294642;
+    }
+    .markdown ul { margin: 8px 0 16px; padding-left: 22px; }
+    .markdown li { margin: 6px 0; color: #393a36; }
+    .markdown code {
+      padding: 1px 5px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #f3f3ef;
+      font-family: var(--mono);
+      font-size: .92em;
+    }
+    .markdown table {
+      display: table;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      overflow: visible;
+      border-collapse: collapse;
+      margin: 12px 0 22px;
+      font-size: 12.5px;
+      table-layout: fixed;
+    }
+    .markdown th, .markdown td {
+      border: 1px solid var(--line);
+      padding: 7px 8px;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      white-space: normal;
+    }
+    .markdown table.cols-7 th:nth-child(1), .markdown table.cols-7 td:nth-child(1) { width: 11%; }
+    .markdown table.cols-7 th:nth-child(2), .markdown table.cols-7 td:nth-child(2) { width: 39%; }
+    .markdown table.cols-7 th:nth-child(3), .markdown table.cols-7 td:nth-child(3) { width: 34%; }
+    .markdown table.cols-7 th:nth-child(4), .markdown table.cols-7 td:nth-child(4),
+    .markdown table.cols-7 th:nth-child(5), .markdown table.cols-7 td:nth-child(5),
+    .markdown table.cols-7 th:nth-child(6), .markdown table.cols-7 td:nth-child(6),
+    .markdown table.cols-7 th:nth-child(7), .markdown table.cols-7 td:nth-child(7) { width: 4%; }
+    .markdown table.cols-6 th:nth-child(1), .markdown table.cols-6 td:nth-child(1) { width: 10%; }
+    .markdown table.cols-6 th:nth-child(2), .markdown table.cols-6 td:nth-child(2) { width: 24%; }
+    .markdown table.cols-6 th:nth-child(3), .markdown table.cols-6 td:nth-child(3) { width: 31%; }
+    .markdown table.cols-6 th:nth-child(4), .markdown table.cols-6 td:nth-child(4),
+    .markdown table.cols-6 th:nth-child(5), .markdown table.cols-6 td:nth-child(5) { width: 5%; }
+    .markdown table.cols-6 th:nth-child(6), .markdown table.cols-6 td:nth-child(6) { width: 25%; }
+    .markdown th {
+      position: static;
+      background: #f1f1ed;
+      color: var(--muted);
+      cursor: default;
+    }
+    .markdown tr:hover td { background: transparent; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 22px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel-soft);
+      color: var(--ink);
+      padding: 7px 10px;
+      text-decoration: none;
+      font-size: 12.5px;
+      font-weight: 650;
+    }
+    .btn.primary { border-color: #a8cfc8; background: var(--accent-soft); color: #0b5f58; }
+    @media (max-width: 920px) {
+      header { padding: 16px 16px 10px; }
+      .wrap { padding: 0 16px 44px; }
+      .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .metric:first-child { grid-column: 1 / -1; }
+      table { min-width: 760px; }
+      #modal { width: 94vw; padding: 22px 20px 34px; }
+    }
+    @media (max-width: 560px) {
+      .summary { grid-template-columns: 1fr; }
+      .markdown h1 { font-size: 21px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Fintech Cohort <span class="sub">Org Deviation Scout</span></h1>
+    <div class="sub" id="meta"></div>
+    <div class="bar">
+      <input id="q" placeholder="搜索公司 / 机制关键词...(如 Karma、keeper test、risk gate)">
+      <span class="chip on" data-f="all">全部</span>
+      <span class="chip" data-f="P0">P0</span>
+      <span class="chip" data-f="Pending">待跑卡片</span>
+      <span class="chip" data-f="ready">已生成卡片</span>
+      <button class="top-action primary" id="baselineBtn" type="button">Cohort baseline pattern</button>
+    </div>
+  </header>
+  <div id="compactMeta" class="compact-meta" aria-live="polite"></div>
+
+  <main class="wrap">
+    <section class="summary" aria-label="Cohort summary">
+      <div class="metric">
+        <span>Baseline thesis</span>
+        <p class="thesis">强监管、强信任、高技术杠杆之间找平衡；普通公司会把合规、风险、客户反馈和 AI/自动化嵌进运营系统，但多数仍是局部 owner、阶段性重组和管理层叙事驱动。</p>
+      </div>
+      <div class="metric"><b>11</b><span>companies in list</span></div>
+      <div class="metric"><b>11</b><span>ready scored cards</span></div>
+      <div class="metric"><b>100</b><span>top attention score</span></div>
+      <div class="metric"><b>12</b><span>full markdown docs embedded</span></div>
+    </section>
+
+    <section class="table-panel">
+      <div class="table-scroll">
+        <table id="t">
+          <thead>
+            <tr>
+              <th data-k="rank">#</th>
+              <th data-k="conf">Conf</th>
+              <th data-k="dir">Dir</th>
+              <th data-k="company">公司 · 一句话</th>
+              <th>卡片</th>
+            </tr>
+          </thead>
+          <tbody id="tb"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="empty">没有匹配的公司</div>
+    </section>
+  </main>
+
+  <footer>本页为现场 pre 的静态 UI：baseline、Revolut、Chime、Coinbase、Kraken、Mercury、Ramp、Monzo、SoFi、PayPal、Robinhood 与 Stripe 卡片渲染自本地 markdown 源；没有重新联网、采集或读取 raw。</footer>
+
+  <div id="ov">
+    <aside id="modal" role="dialog" aria-modal="true">
+      <button id="x" aria-label="关闭">×</button>
+      <div id="mc"></div>
+    </aside>
+  </div>
+
+  <script>
+    const BASELINE_MD = "# fintech-cohurt Baseline Company Portrait\n\n## One-Sentence Portrait\n这个 cohort 的中位数公司是一家在强监管、强信任和高技术杠杆之间找平衡的金融科技组织：它会把合规、风险、客户反馈和 AI/自动化逐步嵌进运营系统，但大多数机制仍是局部 owner、阶段性重组和管理层叙事驱动，而不是全公司硬约束。\n\n## Top normal/edge mechanisms\n- 客户/会员/信任作为组织操作系统\n- 小型跨职能 squad/collective 对齐产品域\n- 高压、恐惧、羞辱或工作生活失衡\n- 高紧迫/10x/执行压强成为管理隐喻\n\n## Top negative-space / outlier-edge rules\n- 只有 AI 口号或试点不算 outlier；AI 必须改变角色、权限、评审、发布、客服或风控节奏。\n- 高 bar/使命匹配是常见 baseline；短周期、硬后果、长期执行、员工侧对账才升级 D。\n- 风险/合规门禁是 table-stakes；自缚式边界、默认下沉权、明确阈值才升级。\n- Toxic/red-flag 不降低 D；跨源一致且改变员工行为的高压/政治/控制债保留 high-D，方向标为向下。\n\n## What This Baseline Company Looks Like\n这类公司的组织通常围绕两条约束运行：一条是增长、产品速度和平台扩张，另一条是合规、安全、信任和客户保护。普通公司不会只靠“move fast”运行，它会设置专门的风险、合规、安全、伙伴、客服或政策职能，让金融基础设施的外部约束进入内部组织图。\n\n人才上，它普遍会强调高标准、使命感和专业经验，但这不自动等于高人才密度。普通状态是：关键岗位会引入资深专才，招聘会讲 bar 和文化匹配，绩效也会有改善或退出语言；但只有少数机制能显示短周期、硬后果、长期重复执行和员工侧对账。\n\n决策上，它通常是“授权加门禁”的混合体。产品、工程、运营或小队在局部可推进，但信贷、合规、安全、客户资金、外部伙伴和重大声誉风险会触发审批、清单、评审或高管升级。这个混合体是 baseline，不应因为“既授权又审批”就直接判高 D。\n\n组织形态上，普通公司会随着规模和监管压力增厚层级，也会周期性压层级、补高管、重划团队或裁撤冗余。AI/自动化已成为 cohort 内常见的效率叙事；只有当它真正改变谁能发货、谁能评审、谁拥有判断权、客服/风控/发布节奏如何运作时，才越过普通工具采用。\n\n信息流上，客户反馈、员工 survey、客服信号、风险监控和安全演练会进入正式流程。普通公司有仪表盘、健康检查、客户研究和管理层沟通；更强但仍常见的是把这些信号接进产品优先级、风险响应或发布流程。真正非基线的是坏消息能跨层级无损上行，且有事实动作证明高层被迫改变资源、组织或责任。\n\n高管角色通常仍很重要。一号位或核心高管会在文化、产品、客户升级、关键招聘或组织调整上留下强痕迹，但普通公司更多是“关键节点亲历”，不是持续深入二线组织肌理的自运转设计。\n\n## Operating Cadence\n普通节奏包括年度或半年度绩效校准、季度业务/风险 review、常规 all-hands 或管理层沟通、客户支持和产品反馈循环、定期安全/合规审查，以及在上市、国际化、牌照、业务线扩张或成本压力出现时的高管补位和 reorg。\n\nAI/自动化导入通常先从客服、数据分析、风控、工程效率、发布报告和内部工具开始。baseline 公司会鼓励员工试用工具，也会把若干流程自动化；但还不一定把 AI 变成正式权力边界、绩效机制或跨职能组织接口。\n\n## Dimension-by-Dimension Baseline\n### 战略—结构匹配\n普通公司会把监管、银行/支付网络、合作伙伴和客户 segment 映射进组织分工。它的结构能解释部分战略，但常常仍是阶段性补丁：某项新业务、某个地区或某类客户增长后，才补 owner、合规门或伙伴团队。高 D 需要看到结构先于战略动作，且能稳定改变资源分配。\n\n### 人才密度\n普通公司会谈高 bar、使命匹配和关键岗位专才，也会有绩效改善或退出语言。baseline 不是“无限包容低绩效”，而是有一定人才筛选和校准机制。越界信号是短周期、硬退出、适用核心岗位、长期执行且有员工侧或事实动作对账。\n\n### 决策权与授权\nbaseline 是局部自治加风险门禁。小队和职能 owner 可推进可逆事项，金融、合规、安全、资金和声誉风险会升级。高 D 来自清晰可复述的授权边界、默认下沉或自缚式升级规则，而不是笼统说“empower teams”。\n\n### 官僚层级与span of control\n普通公司随规模增厚，又会在效率压力下压层、裁撤或重划高管 remit。压层级本身已经常见，不能自动高 D。异常的是持续用宽 span、少层级和更少人做更大产出，并让晋升和地位不依赖“管更多人”。\n\n### 激励与所有权\n员工股权、长期财富、指标 owner、客户结果和合规结果都可能进入激励语言。baseline 中这些机制常常存在但强度有限。高 D 需要看到真实上下行、具名 owner、奖金/晋升/资源联动，或员工日常选择被结果所有权明显改变。\n\n### 信息透明与真相上行\n普通公司有客户反馈、员工 survey、风险监控、客服信号和安全演练。它们能提高信息量，但不自动证明真相无损上行。越界在于坏消息触发跨层级行动、公开承认具体组织病、改资源/结构/责任，并有独立证据显示没有回弹。\n\n### 康威定律/组织即产品\nbaseline 公司常见小队、平台、API、权限、工作流和 AI 工具对产品形态的影响。高 D 不是“产品模块化”，而是团队边界被有意设计来产生某种架构，且组织接口、产品接口和责任接口互相锁定。\n\n### 一号位对组织的亲历程度\n普通公司的一号位会出现在文化、产品、客户升级、招聘或重大 reorg 上。它显示一定组织自觉，但很多仍是 stated。高 D 是一号位能持续深入组织细节，同时把机制设计成可脱离本人日常插手而运行。\n\n### 组织随战略演进的能力\nbaseline 公司会因牌照、国际化、AI、成本、上市或新业务阶段而补高管、重组、裁撤或孵化新单元。reorg 不自动是债，也不自动是 alpha。高 D 需要显示主动演进、可复述目标结构和落地后的角色/资源改变。\n\n### 运营隐喻\n客户、会员、信任、平台、循环、操作系统和高紧迫感都是常见隐喻。它们帮助读者理解组织，但口号本身 D 低。只有隐喻稳定约束优先级、授权、风险取舍或行为后果时，才算 operating mechanism。\n\n### 红旗\n政治化、成长阻塞、高压、控制债、合规脆弱和执行慢在这个 cohort 并不罕见。普通风险不自动高 D；但跨源一致、持续、影响晋升/退出/心理安全/监管结果的红旗仍然是 distinctive，方向向下但 D 不应被抹平。\n\n## Baseline Red Flags That Are Still Ordinary\n局部政治、管理层方向不清、增长期层级增厚、员工抱怨晋升慢、客服或合规压力、AI 工具试点混乱、国际化或牌照带来的控制债，都是普通风险。它们应该触发 C 和方向审视，但不能只凭一次员工评论或一次管理层承认就判成高 D。\n\n## What Would Feel Noticeably Non-Baseline\n明显非基线的机制包括：全公司范围的短周期硬退出；默认下沉且有倒计时的决策权；员工股权/奖金与具名业务结果强绑定；坏消息能迫使公开资源重配；团队边界先于产品架构设计并长期稳定；AI 让非传统角色实际拥有 shipping 或评审权；一号位把组织机制设计成可脱离个人微操的自运转系统；以及跨源一致显示恐惧、高压或控制债已经系统性改变员工行为。\n";
+    const REVOLUT_MD = "# Revolut — Why attention?   ·   Score 100 · 置信度 RICH · 优先级 P0\n\n        **一句话定性**：Revolut 的组织操作系统 = 极端人才筛子 + Karma 风控奖金乘数 + KPI/事实系统压制中层包装。它不是普通 fintech 的 high bar / ownership / risk control，而是把这些常见主题推到“短周期、硬后果、员工行为被直接改写”的强度：10%-20% forced attrition、2-3 次迭代/两周内判断能不能行、6-week improve-or-remove、低绩效 fired without negotiation；Karma 把 30+ 风险/合规行为加减分并直接影响奖金；KPI-driven 文化让中层不能靠沟通包装坏消息，目标长期不达成就换人。代价同样 revealed：高压、高流失、政治化和“chew you up and spit you out quickly”并存。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 人才密度 ★计分 | • \"—Forced attrition [принудительный отток]— минимум 10% в год. ... —Я думаю, даже 20% хорошо.\" -----Nikolay Storonsky / 2025-12-17<br>强制流失率最低每年 10%。……我认为甚至 20% 也很好。<br>• \"if you see a person is not performing for 1-2 months, most likely they will not be performing for the next year... Since the person is not delivering within first 3 months, most likely they will not.\" -----Nik Storonsky<br>如果一个人 1-2 个月没有表现，通常下一年也不会表现；如果前三个月没有交付，大概率以后也不会。<br>• \"The Revolut ‘Founder Mode’ — ... Underperformance: 6 weeks to improve or removal\" -----Nik Storonsky (剖析) / 2026-03-17<br>Revolut 的 Founder Mode 对低绩效给 6 周改善，否则移除。<br>• \"Employees with a performance rating that missed expectations significantly ‘will be fired without negotiation.’\" -----Revolut performance material<br>绩效显著低于预期者会被直接解雇，且没有谈判。 | Revolut 的人才密度不是“高标准”口号，而是短周期硬筛选：年度 forced attrition 被 CEO 说成 10%-20%；新人/合作对象在 2-3 次迭代、两周到三个月内被判断；低绩效有 6-week improve-or-remove 和 without negotiation 的硬退出。这个机制直接改写员工行为：适应、交付和证明价值的时间被压到极短。 | A | 3 | 3 | ↓ |\n| 激励与所有权 ★计分 | • \"Karma, our proprietary points-based system that directly links employee behaviour to risk outcomes. Karma assesses engagement with over 30 risk and compliance processes, with employees gaining or losing points based on their actions. The final Karma score has a direct, and potentially significant impact on remuneration, with variable bonus performance increased for high scores and decreased for low scores.\" -----Revolut (Annual Report, Risk Governance — Risk & Compliance Culture) / 2026-03-12<br>Karma 是 Revolut 的专有积分系统，把员工行为与风险结果直接相连；员工在 30 多项风险与合规流程中的行为会加分或扣分，最终分数会直接且可能显著影响可变奖金。<br>• 〔事实〕2025 年 Karma 框架被复核并标准化积分分配，同时提高员工对流程及其影响可变薪酬的透明度。-----Revolut Annual Report / 2026-03-12 | Karma 把风控/合规从“流程要求”变成奖金乘数：员工在 30+ 风险与合规流程中的具体行为被计分，分数直接影响 variable bonus 上下调。这是强 outlier，因为它把 regulated fintech 的合规文化嵌入个人薪酬，而不是停留在培训、政策或事后问责。 | A | 3 | 3 | ↑↓ |\n| 信息透明与真相上行 ★计分 | • \"подчиненные могут напрямую говорить, если им что-то не нравится... никакой политики, поскольку все KPI-driven, все завязано на метриках... средние менеджеры, не могут спрятаться... мы просто смотрим на факты... Важно одно: цель достигнута или нет. Если не достигнута— почему. Если долгое время не достигается, значит, кто-то другой должен попробовать на твое место.\" -----Nikolay Storonsky / 2025-12-17<br>下属如果不喜欢什么，可以直接说；没有政治，因为一切 KPI-driven，都绑定到指标。中层经理藏不住；我们只看事实。重要的是目标是否达成；如果长期不达成，就该让别人试试你的位置。<br>• 〔事实〕Revolut 推出 RevManager Dashboard，以直属下属在季度敬业度调查中的经理相关问题回答形成 5 分制 RevManager Score，并显示行政任务完成、团队流失、高绩效员工离职等数据。-----Revolut Annual Report, Our People / 2026-03-12 | Revolut 用 KPI/事实系统压制 managing up：下属可以直接否定，中层无法靠沟通包装坏消息，评价落到目标是否达成、未达成原因，以及长期不达成时换人。RevManager Dashboard 又把经理行为、团队流失和高绩效员工离职做成可见指标。 | A | 3 | 3 | ↑ |\n| 官僚层级与 span of control | • \"How many did you have now? Like 40, around 44... I have like 32 direct and then like 10-15 indirect.\" -----Nikolay Storonsky<br>采访者问他有多少直接下属，他回答大约 40 到 44 个，其中约 32 个直接、10 到 15 个间接。<br>• \"That's how you end up having many, many reports because if you have philosophy that you only work with self guided people, you filter out a lot of bad people and good people stay...\" -----Nikolay Storonsky<br>他说之所以能有大量汇报对象，是因为只和自驱的人共事，过滤掉很多不合适的人，留下的人能自我驱动并交付。 | CEO 在 10k+ 人规模下仍保留约 40-44 个直接/准直接汇报口，用极宽 span 替代传统多层委托。这个设计依赖前面的人才筛子：只有足够自驱、能直接交付的人留下，CEO 才能用超宽汇报口维持控制面。 | A | 3 | 3 | ↑ |\n| 康威定律 / 组织即产品 | • \"Engineers and designers reporting to them rather than functional heads... [product owners] have: Authority to hire/fire; Budget control without approval layers; Direct P&L responsibility.\" -----David Lobo (High Output Work newsletter) / 2025-07-04<br>工程师和设计师向 product owner 汇报，而不是向职能负责人汇报；product owner 拥有招/裁权、无需审批层的预算控制和直接 P&L 责任。<br>• \"to launch a product, you need to have a very small team of 10 people... Cost will be probably... two, three million pounds, because they're all independent. You can run a lot of bets independently.\" -----Nik Storonsky<br>通常推出一个产品需要约 10 人小团队，工作一年到一年半，成本约二三百万英镑；这些团队彼此独立，可以独立运行很多下注。 | Revolut 的 product owner 不是协调型 PM，而是跨职能小队的 local CEO：工程/设计不按职能墙汇报，owner 同时拥有招裁、预算和 P&L，团队边界、产品边界和结果责任绑定。这个机制让每个产品 bet 像一个小公司，而不是传统矩阵里的项目组。 | A | 3 | 2 | ↑ |\n| 一号位对组织的亲历程度 | • \"Despite rapid scaling to over 50 countries, Revolut's founders still review 100% of screens before shipping\" -----Dmitry Zlokazov / 2025-05-15<br>即使扩张到 50 多个国家，Revolut 创始人仍在发布前审核 100% 的屏幕。<br>• \"We take maybe seven or 10 projects... And we go super deep into them... sitting with engineers, like reading code level and understanding... how it's built exactly and what's the underlying issue.\" -----Dmitry Zlokazov / 2026-06-25<br>Revolut 会从约 100 个项目里选 7 到 10 个对客户最有影响的项目，领导层深入到和工程师坐在一起、读代码级别，理解具体如何构建和底层问题。 | 创始人细节控制不是偶发 review，而是出货门：50+ 国家规模下仍审核 100% 即将 shipping 的 UI，并对最重要项目深入到代码级别。这给自治小队加了一层 founder-level quality bar，也解释了 Revolut 为什么能同时保持小队独立和高控制。 | A | 3 | 2 | ↑ |\n| 运营隐喻 | • \"new bets,\" under which new offerings are launched and evaluated against performance targets before being scaled or discontinued. -----Bloomberg/GFN, reporting Revolut process / 2026-04-24<br>Revolut 的 new bets 策略下，新产品会先推出，并依据绩效目标评估，再决定扩大或终止。<br>• \"you look at how much money they generate after they launch the product, month 1, month 2, month 3, month 4... top 30-40%... one team becomes two teams, three teams, and becomes a department.\" -----Nik Storonsky<br>团队发布产品后，看第 1-4 个月产生多少钱，与其他 bets 比较；若进入前 30-40% 且有增长，就允许增团队，一个团队变两个、三个，最后成为部门。 | Revolut 把新产品当投资组合运行：先用小队 launch，再用前 1-4 个月的收入/增长表现排序，进入前 30-40% 才继续加人，从一个团队扩成多个团队甚至部门。资源配置不是按叙事或资历，而是按早期 performance target 扩张或停止。 | A | 2 | 3 | ↑ |\n\n        - **盲区 + 下一步**：blind_dims=[]。Revolut 已有多条可复述、带硬后果、且跨人才、激励、信息、span、产品组织的 outlier 机制；后续验证重点不是“有没有组织设计”，而是这些机制的长期副作用：高流失、高压、政治化、合规风险与关键人依赖。\n        - **业务/战略离群(不计入组织分)**：多国扩张、牌照、产品组合和金融犯罪防控投入本身不计入组织分；只有当它们对应到 Karma、forced attrition、product-owner 权责、new-bets 资源配置等员工行为机制时才计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/Revolut/notebook.json 的 notebook records 评分，非实时网搜；records=1600，date_fill=88.25%，blind_dims=[]，chunk_status={'THIN': 1, 'RICH': 24}。\n";
+    const COINBASE_MD = "# Coinbase — Why attention?   ·   Score 100 · 置信度 RICH · 优先级 P0\n\n        **一句话定性**：Coinbase 的组织操作系统 = mission contract 切人员边界 + DRI / internal VC 切决策边界 + agent-first engineering 切工作流边界。它不是泛泛地“高绩效/AI-first”，而是把组织规则做成硬后果：不接受使命边界的人拿退出包离开；未经 Brian/Emilie 批准成立委员会是 fireable offense；venture bets 不需要上级链条一致同意，任何内部投资人愿意出预算即可绿灯；AI adoption 被 CEO 亲自设 deadline，拒绝 onboarding 的工程师会被清退。代价是组织控制很硬，mission purity、AI adoption、权限收紧和裁员流程共同形成高速度、高排异性的运行方式。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 战略—结构匹配 ★计分 | • \"either they're going to have to go or I'm going to have to go\"；Armstrong 随后给不认同方向的员工提供 exit package，5% 员工接受，公司重新对齐到 mission。-----Brian Armstrong<br>• \"clear contract with our employees\"；Emilie Choi 称 no-politics stance 后约 10% 员工离开，但这让公司明确了办公室里的行为契约。-----Emilie Choi / 2024-06-01<br>• 〔事实〕Coinbase 明确把公司注意力限制在 crypto / economic freedom 使命相关政策，非营利限定约 1%，不在内部倡导与使命无关的政治或社会议题。-----Brian Armstrong | Coinbase 把战略使命直接变成人员边界和工作场域边界：不是只讲 mission，而是允许不认同者退出，并把非使命政治/社会议题排除出工作场域。这个机制把“公司为什么存在”变成“谁适合留下、什么话题能进入组织”的硬规则。 | A | 3 | 3 | ↑↓ |\n| 决策权与授权 ★计分 | • 〔事实〕Coinbase 的 venture bets 不要求从老板到 CEO 一致同意；员工可向产品组负责人、少数 handpicked engineers、Brian 等内部投资人 pitch，只要任一人愿意用自己的预算资助即可 greenlight。Armstrong 称 USDC 曾被他投反对票，但其他人投 yes 并资助，最终跑成大项目。-----Brian Armstrong / 2025-08-20, 2026-01-13<br>• \"fireable offense to start a committee\" without Brian or Emilie approving it. -----Emilie Choi, President and COO of Coinbase<br>• 〔事实〕Coinbase 使用 RAPID 决策文档：所有 input 进入同一文档，一个 decision maker，默认 48 小时内拍板。-----Emilie Choi | Coinbase 的决策设计不是“少开会”口号，而是一套反共识链条：venture bets 用内部 VC 机制绕开层层 veto；DRI/RAPID 把责任压到单一 owner；未经批准成立委员会可被解雇，用硬后果防止责任稀释。 | A | 3 | 3 | ↑ |\n| 康威定律/组织即产品 ★计分 | • 〔事实〕Coinbase 围绕 agent-first infrastructure 重设计工程模型：2,400+ developers 日常使用 Cursor，75% PRs 由 agents 创建，部分 1-2 人团队能完成过去整队才能完成的功能，部分团队 idea-to-production 从 20 天降到 2 天内。-----Cursor case study about Coinbase / 2026-06-23<br>• 〔事实〕Coinbase 把传统 sprint planning 改成 ticket 创建后开发者可直接抓取、Plan Mode 拆解、agent 执行；idea 到 first PR creation 从 8 天降到不到 30 分钟。-----Cursor case study about Coinbase engineering process / 2026-06-23<br>• 〔事实〕公司级 speedrun 中约 800 名工程师同 call，30 分钟提交约 300-400 个 PR；内部 bot 可在秒级把反馈转成 PR，PR review cycle 从约 150 小时降到约 15 小时。-----Chintan Turakhia | Coinbase 把 AI 从工具采用推进到工程组织重构：工程师角色从写/审代码转向定义 intent、验证结果；agent 进入 ticket、PR、review、release loop；speedrun 把新工作节奏强制暴露给整个工程组织。这里的偏离不在于“用了 AI”，而在于 workflow、团队规模、产出指标和协作瓶颈都被 agent-first model 重写。 | A | 3 | 3 | ↑ |\n| 人才密度 | • \"We have a veto right by Brian or me for any new hire. We personally review every new person\" -----Emilie Choi, President and COO of Coinbase<br>• \"some of them didn't and they got fired\"；Armstrong 说未在一周内完成 Cursor / GitHub Copilot onboarding 且无正当理由的工程师被解雇。-----Brian Armstrong / 2025-09-01<br>• 〔事实〕Coinbase 文化文档要求 excellence、hard challenges、100% accountability、ownership；若某人持续没有 raising the team average，公司会 part ways。-----Coinbase Culture Doc via Slab | 人才机制不是普通 high bar：CEO/COO 对每个新 hire 保留最终 review/veto；AI adoption 被转成留任测试；“raising the team average”成为是否继续留在团队的明确标准。它和 mission contract、AI-native 转型一起构成人员筛选系统。 | A | 3 | 3 | ↑↓ |\n| 安全控制 / 红旗 | • 〔事实〕Coinbase 客服人员在 locked-down facilities 和 locked-down Chromebook 中工作；公司持续 red-team 内部人贿赂风险，把更多工作迁往美国/欧洲和 Charlotte 支持设施。-----Brian Armstrong / 2025-08-20<br>• \"we don’t walk them out the door—they go to jail\"；Armstrong 称抓到收受贿赂、偷带手机拍屏等违规者，会移交刑事后果。-----Brian Armstrong / 2025-08-20<br>• 〔事实〕裁员通知中，受影响员工一小时内收到个人邮箱信息，Coinbase 当天移除系统访问权限；Armstrong 承认 sudden and harsh，但称这是保护客户信息的 responsible choice。-----Brian Armstrong | Coinbase 在安全/信任岗位上使用非常硬的组织控制：设施、设备、访问权限、地域迁移、红队测试和刑事威慑一起约束员工行为。它是 crypto custody / customer information 风险下的 outlier 控制机制，方向上带明显红旗：安全优先压过员工体验。 | A/RF | 2 | 3 | ↓ |\n\n        - **盲区 + 下一步**：blind_dims=[]。Coinbase 已有多条可复述、带硬后果、跨 CEO/COO/工程/员工边界的 outlier 机制；后续若要验证质量，优先看这些规则在非工程团队是否同样执行，以及 AI-native workflow 是否带来长期维护债。\n        - **业务/战略离群(不计入组织分)**：USDC、Base、crypto 政策影响力、交易/托管业务本身不计入组织分；只有 internal VC、DRI、AI workflow、mission contract 等改变组织权力和员工行为的部分计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Coinbase/notebook.json 的 notebook records 评分，非实时网搜；records=1567，date_fill=64.26%，blind_dims=[]，chunk_status={'RICH': 24, 'THIN': 3}。\n";
+    const KRAKEN_MD = "# Kraken — Why attention?   ·   Score 100 · 置信度 RICH · 优先级 P0\n\n        **一句话定性**：Kraken 的组织操作系统 = 监管边界硬切市场 + 清层级/极宽 span + 价值观付费退出。它不是普通 crypto exchange 的“安全/合规重视”，而是把“哪里能服务、谁能留下、组织有多少层”都做成硬边界：宁可退出纽约/放弃非法市场份额，也不把合法客户暴露在罚款、刑责和冻结风险里；Sethi/Ripley 继续清除 organizational layers，co-CEO 直接接入 50-70 个汇报对象并用自建 AI bots 摄取信息；Jet Ski Program 给价值观不匹配者两周窗口和四个月薪酬离开。代价是持续滚动裁员、AI efficiency 裁员和强文化边界，组织 Alpha 带明显硬治理/清退红旗。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 战略—结构匹配 ★计分 | • \"we would be doing them a disservice by... offering our service illegally to another set of users that creates a risk for these guys that we are servicing legally.\" -----Jesse Powell / 2026-06-29<br>Powell 说 Kraken 只服务能够合法服务的客户；若为增长非法服务另一批用户，会给合法客户带来风险。<br>• \"we left New York and we’ve had no business in New York since then.\" -----Jesse Powell / 2018-05-22<br>Kraken 因 BitLicense 离开纽约，此后不在纽约经营。<br>• 〔事实〕Kraken 的 security 组织拆成 red team、blue team、app sec、Security Labs 等边界，并有生态外诈骗/冒充站点 takedown 职责。-----Nick Percoco / Kraken security material | Kraken 把监管可服务边界和客户安全边界变成市场进入/组织配置规则：不能合法服务就不服务，宁可牺牲增长；安全风险也不是公关口号，而是拆成红队、蓝队、应用安全、研究和日常 takedown 的团队边界。 | A | 3 | 3 | ↑ |\n| 官僚层级与 span of control ★计分 | • \"hundreds more have gone... a rolling program of firings over and above the 15% cut late last year... culling aggressively across all functions... improving Kraken’s EBITA\" -----CoinDesk / 2025-04-17<br>Sethi 成为 co-CEO 后，除去年 15% 裁员外，还有跨所有职能的滚动裁撤，目标是改善 EBITA。<br>• Sethi/Ripley 称需要 shed “organizational layers”，让业务 “leaner and faster”。-----Kraken blog cited by CoinDesk / 2025-04-17<br>• \"I’ve got maybe 50-70 reports\"；Sethi 被描述为用自建 AI bots 处理每日信息流并管理 50-70 个直接下属。-----Arjun Sethi / BlockNews Network | Kraken 的去层级不是抽象效率口号，而是持续跨职能裁撤 + 明确清除组织层级 + co-CEO 极宽直接汇报口。它用更少层级和更高 CEO 信息吞吐换速度，代价是组织稳定性和员工安全感下降。 | A | 3 | 3 | ↓ |\n| 激励与所有权 ★计分 | • \"Jet Ski Program\"；任何对文化文件不舒服的人有两周时间离开，并获得四个月薪酬。-----Jesse Powell and Kraken memo, quoted by The New York Times / 2022-06-15<br>• \"If you want to leave Kraken... hopping on a jet ski and heading happily to your next adventure!\" -----Kraken memo / 2022-06-15 | Kraken 把文化/价值观边界做成带现金后果的自选择退出机制：不认同核心价值的人不只是被教育或绩效管理，而是被明确邀请在两周内拿四个月薪酬离开。这个机制直接把“谁适合留下”从软文化变成硬组织筛选。 | A | 3 | 3 | ↓/? |\n| 信息透明与真相上行 | • \"We also have a Red Team... hacks us on a regular basis, from the outside, from the inside, social engineering—any sort of attack factor is completely free game.\" -----Nick Percoco / 2023-11-06<br>Kraken 的红队会定期从外部、内部、社会工程等全攻击面攻击公司。<br>• 〔事实〕红队还用 AI 合成 CSO 声音给员工打电话，测试员工是否会按伪造指令行动。-----Nick Percoco | Kraken 把坏消息发现前置为安全组织机制：红队不是合规演习，而是从外部、内部、社会工程和 AI 深伪等角度持续攻击公司，迫使流程和人员弱点暴露。 | A | 2 | 3 | ↑ |\n| 康威定律 / 组织即产品 | • 〔事实〕Kraken Organizations 产品把 Workflow、Policy、Request、Execute 做成机构客户权限/审批模型；“始终要求审批”开启时 Execute 权限不生效。-----Kraken Support<br>• 〔事实〕Kraken 内部服务通信标准化到 gRPC/Protobuf，跨 Rust、C++、Go、Python、TypeScript 生成客户端/服务端，并自动带出 tracing、retries、deadlines、observability。-----Kraken Engineering / 2025-12-16 | Kraken 把交易所的信任/权限结构产品化：机构客户的审批、执行、策略和请求进入统一模型；内部工程也用协议标准化降低多语言团队接缝。它不是最强计分项，但能说明 Kraken 的安全/治理边界进入了产品和工程接口。 | A | 2 | 3 | ↑ |\n| 红旗 | • 〔事实〕Kraken 因全业务部署 AI 带来的效率裁掉约 150 人，AI 正在更广泛使用。-----Cointelegraph / Bloomberg / 2026-05-18 | AI efficiency 已经进入岗位边界和裁员机制。它强化了 Kraken 的 lean/faster 方向，但也是组织代价：岗位需求被自动化重写，退出压力上升。 | A/RF | 2 | 2 | ↓ |\n\n        - **盲区 + 下一步**：blind_dims=[]。Kraken 的 outlier 主要集中在硬边界治理：监管市场边界、文化退出边界、层级/汇报边界和安全红队边界。后续验证重点是这些机制是否提升执行质量，还是主要转化为持续裁员和控制债。\n        - **业务/战略离群(不计入组织分)**：IPO、交易量、地区扩张、多资产产品本身不计入组织分；只有监管边界、安全组织、Jet Ski、去层级和极宽 span 等改变员工/客户风险边界的机制计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Kraken/notebook.json 的 notebook records 评分，非实时网搜。\n";
+    const RAMP_MD = "# Ramp — Why attention?   ·   Score 100 · 置信度 RICH · 优先级 P0\n\n        **一句话定性**：Ramp 的组织操作系统 = outcome-team hard mandate + meeting-default reset + AI-native product/engineering interface。它不是泛泛地“快/AI-first”，而是把速度和杠杆做成组织默认值：团队按客户或业务 outcome 组织，拿到大目标、紧时间线和 fully autonomous resourcing；公司每年默认取消全部会议，必要会议 opt in，让任何员工有权拒绝/取消会议；InSpec / Ramp Inspect 让 PM、设计、运营、部分销售等非传统工程角色直接生成产品改动和 PR，Ramp Inspect 当月承担超过 50% production PR。它的 outlier 是把“少人、更快、更接近客户反馈”的原则真正嵌进团队边界、会议权力、产品接口和代码交付。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 战略—结构匹配 ★计分 | • \"Teams are organized based on customer or business outcomes above all else... Big goals, tight timelines, and fully autonomous resourcing\" -----Geoff Charles / 2023-05-23<br>Ramp 团队首先按客户或业务 outcome 组织；曾给团队自动化 outbound emails 贡献 50% SQL 的 mandate，也给团队三个月搭建 Bill.com 竞品。共同要素是大目标、紧时间线和完全自治资源。<br>• 〔事实〕Ramp 的 AI 组织边界是小中央平台团队负责 LLM/数据/知识/工作流底座、连接器、培训赋能和变革管理，业务团队在其上构建并反馈 roadmap。 | Ramp 把战略目标直接变成小团队 mandate：不是按职能排队，而是给团队一个足够大的业务 outcome、紧时间线和自治资源，让技术团队理解业务并直接对结果负责。AI 平台也按“中央底座 + 业务自建”的边界组织。 | A | 3 | 3 | ↑ |\n| 决策权与授权 ★计分 | • 〔事实〕Ramp 每年一次取消所有会议，只把必要会议重新 opt in；继续公开 days counter 是为了让任何员工都能拒绝或取消会议。-----Eric Glyman / 2026-06-23<br>• \"It's led to person who came up with the creative idea. Be accountable to that idea. It's not done by committee.\" -----Karim Atiyeh<br>由提出创意的人主导并对想法负责，不由委员会来做。<br>• \"give small teams full autonomy over these problems\" -----Karim Atiyeh | Ramp 反转默认会议/委员会权力结构：会议不是默认占用时间，而是每年清零后重新选择；创意由提出者负责，不交给委员会稀释；问题空间被拆给小团队完整拥有。 | A | 3 | 3 | ↑ |\n| 康威定律 / 组织即产品 ★计分 | • \"50% of Ramp's code is built by AI... PMs are shipping tons using InSpec. And so are designers, so are operators... account managers and salespeople are also getting activated\" -----Geoff Charles, CPO of Ramp<br>Ramp CPO 称 50% 代码由 AI 构建，InSpec 让 PM、设计师、运营、部分客户经理和销售也能生成真实前后端产品改动、提交 PR。<br>• \"RAMP Inspect is responsible for over 50% of PRs that we merge to production.\" -----Ian<br>Ramp Inspect 当月负责超过 50% 合并到生产环境的 PR。 | Ramp 把产品接口、代码上下文、设计组件和自动 PR 审核做成 AI-native 工作流，非传统工程角色也能从客户反馈直接生成真实产品改动并进入工程队列。产品架构接口因此重画了组织接口。 | A | 3 | 3 | ↑ |\n| 激励与所有权 | • \"instead of hiring... people who were focused just on resolving the ticket, we incentivized people to actually decrease number of tickets over time... support report into product\" -----Geoff Charles<br>Ramp 不按处理工单量激励支持团队，而是激励他们长期减少 tickets、提升 deflection；支持团队汇报到产品侧。<br>• 〔事实〕40 万以上用户由不到 30 人的 agent 团队支持。-----Geoff Charles | Ramp 把 support 的激励对象从“处理更多 tickets”改成“减少未来 tickets/提升 deflection”，并让 support 汇报到产品侧。这改变了招聘画像和日常行为：支持团队为产品问题消除和客户反馈闭环负责，而不是为工单吞吐负责。 | A | 3 | 3 | ↑ |\n| 人才密度 | • \"Ramp 每位销售的目标数字约为最接近竞争对手的 5 倍... 只招聘少数人，让每个人完成更多合同并获得高得多的报酬。\" -----Eric Glyman / 2026-06-23<br>• 〔事实〕Ramp 用 L0-L3 AI 熟练度分层管理人才，低熟练度者面临不适配后果；招聘设置 AI/prototype session，并用 usage tracking 找出谁在放大产出、谁需要介入。 | Ramp 的人才密度机制不是单纯 high bar，而是“少数精锐 + AI 熟练度门槛”：销售单人目标约竞品 5 倍，AI 熟练度进入分层、招聘和留任判断。证据强，但硬清退细节不如 Revolut/Coinbase 完整。 | A | 3 | 2 | ↑ |\n| 官僚层级与 span of control | • \"impact divided by headcount... fewer than five PMs and fewer than 50 engineers as we scaled to $100 million in ARR... restrict PM hiring until... product is the bottleneck\" -----Geoff Charles / 2023-05-23<br>Ramp 前两年扩到 1 亿美元 ARR 时，PM 少于 5 人、工程师少于 50 人；只有当产品成为明显瓶颈才招 PM。 | Ramp 用 impact/headcount 作为组织杠杆原则，刻意延迟 PM/协调层增长，让非 PM 承担部分 PM 工作、现有 PM 拿更大 scope。它压低头衔/协调层，用少人高杠杆保持速度。 | A | 3 | 2 | ↑ |\n| 信息透明与真相上行 | • \"every single negative review... shared back to the tech lead, the PM and the designer... NPS and CSAT... operational overhead... core contract... bugs and issues being directly assigned to the engineer that's on call\" -----Geoff Charles<br>每条产品负面评价按月回流给 tech lead、PM、designer；NPS/CSAT 和按用户数标准化工单占比成为团队 core contract；bug/issue 直接分派给 on-call 工程师。 | Ramp 把客户侧坏消息接到具名团队责任链：负面 review、NPS/CSAT、工单负担和 bugs 进入 tech lead/PM/designer/on-call engineer 的工作接口，让团队直接感受产品问题的运营成本。 | A | 3 | 2 | ↑ |\n| 一号位对组织的亲历程度 | • \"Karim or I will either meet or review the interview packets of every offer before it's approved.\" -----Eric Glyman / 2022-11-14<br>即使 Ramp 团队更大，Karim 或 Eric 也会在每个 offer 批准前亲自见候选人或审阅面试材料。 | 创始人把每个 offer 前的候选人见面/packet review 做成 hiring gate；这是把一号位注意力嵌进每个录用决策。 | A | 3 | 2 | ↑ |\n\n        - **盲区 + 下一步**：blind_dims=[]。Ramp 的 outlier 集中在速度/杠杆：outcome teams、会议清零、AI-native 产品接口、support-to-product 激励和少人高产。后续验证重点是 AI-generated code / InSpec / Ramp Inspect 是否带来维护债，以及高杠杆是否转化为隐性 burnout。\n        - **业务/战略离群(不计入组织分)**：spend management、enterprise PMF、增长速度本身不计入组织分；只有当它们对应到 outcome team、meeting reset、InSpec/Ramp Inspect、support incentive 等组织机制时计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Ramp/notebook.json 的 notebook records 评分，非实时网搜。\n";
+    const MONZO_MD = "# Monzo — Why attention?   ·   Score 78 · 置信度 RICH · 优先级 P0\n\n        **一句话定性**：Monzo 的 Alpha 不是高压汰换，而是“透明事故处理 + 风险边界授权 + 工程责任映射”的银行组织系统。它最特别的地方，是把客户信任和工程可靠性做成组织动作：重大宕机时全公司切到客服/外部沟通，主动给所有客户推送不确定性信息，并公开 post-mortem；董事会批准的 risk appetite 用定性态度、Dos/Don’ts 和量化指标给 Monzonauts 授权，在边界内快速决策；服务创建前必须映射 code owner/team，并把 owner 关系贯穿告警、review、merge policy。Monzo 更像“可信赖银行的透明/韧性组织设计”，不是 Revolut 式高收益高毒性机器。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 信息透明与真相上行 ★计分 | • \"We had to mobilise the whole company and get everyone on customer service, sending out push notifications to every customer... We didn’t know how long the outage would last... We told people exactly what went wrong and published a post-mortem detailing how we would stop it happening again.\" -----Tom Blomfield<br>2017 年重大宕机时，Monzo 调动全公司做客服，向所有客户推送通知，明确说明不知道会持续多久；恢复后公开故障原因，并发布 post-mortem。 | Monzo 把坏消息直接面向客户和公众，而不是只内部复盘：重大客户影响事件发生时，全公司临时切到客服/外部沟通，主动推送不确定性，事后公开事故原因和防复发措施。这是强 trust-building 组织机制。 | A | 3 | 3 | ↑ |\n| 决策权与授权 ★计分 | • \"Risk Appetite... sets boundaries for Monzonauts to make decisions quickly without needing extra feedback or approval... Attitude to Risk Statements, Dos and Don’ts and associated Risk Appetite Metrics... Board agrees and reviews these every year.\" -----Monzo / 2026-07-01<br>Monzo 的风险偏好通过定性风险态度、规定性的 Dos and Don’ts、量化风险指标给员工设定边界，使员工能在边界内快速决策而无需额外审批。<br>• \"ETL is everyone's responsibility, we don't have a business intelligence team\" -----Monzo data team / 2019-11-04<br>数据科学家端到端负责分析流程，没有传统 BI gatekeeper。 | Monzo 的授权不是口头 autonomy，而是把监管银行的风险边界写成可执行授权系统：员工在董事会批准的风险偏好、Dos/Don’ts 和指标内快速决策；数据团队也去掉 BI gatekeeper，让分析责任分散到数据科学家端到端承担。 | A | 2 | 3 | ↑ |\n| 康威定律 / 组织即产品 ★计分 | • \"each service needs to have a code owner. And the code owner maps to teams... services should map to teams... alerting... reviewing... merging policies\" -----Suhail Patel / Monzo<br>Monzo 的每个服务在创建前必须有 code owner，code owner 映射到团队；该映射贯穿监控、告警、review、merge policy。<br>• \"No engineer should have to be woken up because a node has died, if it has zero impact... moved all of our replicas, all of our pods in Kubernetes... effectively restarting the entire bank.\" -----Suhail Patel / 2019-05-21<br>节点失败不应叫醒工程师；Monzo 曾迁移全部 Kubernetes pods/replicas，相当于重启整家银行。 | Monzo 把服务、团队、告警、代码审核和 merge 权限映射到同一责任模型；平台韧性也被做成演练，而不是事故后补丁。它的组织-产品接口体现在“谁拥有服务、谁收到坏信号、谁能改代码”被清楚绑定。 | A | 2 | 3 | ↑ |\n| 官僚层级与 span of control | • \"tech leads are individual contributors, not managers... squads, teams... collectives... collective level leads... Managing system design, architecture and results on a technical side is their job.\" -----Sally Lait, Monzo<br>Monzo 的 tech leads 是 IC 而不是经理；collective leads 负责多个 squads 的技术架构和结果，people management 另由 EM 体系承担。 | Monzo 把技术领导和人员管理拆开，让技术专家不必通过管理头衔获得影响力；工程师移动团队时 team lead 可变、manager 保持不变，降低战略重配的人力摩擦。 | A | 2 | 2 | ↑ |\n| 组织随战略演进的能力 | • \"Each time an engineer moves teams, their team lead changes. But because these roles are separate, their manager stays the same... we’re free to move them between teams when we need to.\" -----Monzo / 2018-06-27<br>当公司重点变化时，工程师可移动到增长、营收等新团队；team lead 改变，但 manager 保持不变，因此更易按需要重配。 | Monzo 用 team lead / manager 分离来降低组织重配成本：战略重点变化时，人可以移动到最需要的团队，但长期管理关系不断裂。这是中等强度、低毒性的组织演进机制。 | A | 2 | 2 | ↑ |\n| 红旗 | • \"As CEO, I never switched off... I stopped sleeping... reconfigure your role so you’re not doing three jobs at once.\" -----Tom Blomfield<br>创始人 CEO 日程从早 8 点排到晚 8 点，无法停止思考问题、失眠；董事长曾讨论如何重新配置角色，避免一个人做三份工作。 | Monzo 早期 CEO role design 有承载力红旗：组织透明和速度背后，创始人 CEO 承担过多上下文与压力，最终在融资/疫情压力下交接。这是风险提示，不进主分。 | A/RF | 2 | 3 | ↓ |\n\n        - **盲区 + 下一步**：blind_dims=[]。Monzo 的 outlier 更偏信任、透明和工程韧性，不是强清退/强控制系统。后续验证重点是这些机制在规模化和监管压力下是否仍保持速度，而不是退化成普通银行流程。\n        - **业务/战略离群(不计入组织分)**：Monzo 的银行牌照、产品扩张和增长本身不计入组织分；只有全公司事故沟通、risk appetite 授权、service-owner 映射、team-lead/manager 分离等改变组织行为的机制计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Monzo/notebook.json 的 notebook records 评分，非实时网搜。\n";
+    const MERCURY_MD = "# Mercury — Why attention?   ·   Score 59 · 置信度 RICH · 优先级 P1\n\n        **一句话定性**：Mercury 的 Alpha 是一套“金融正确性工程 + 小队自治 + CEO 去瓶颈”的组织系统。它不是 Revolut/Coinbase 那种硬清退机器，而是更工程化、克制的偏离：Haskell/类型系统和 Craft round 把工程筛子推向“关心正确性的人”；约 8 人 autonomous product teams 拥有 invoicing/wires 等产品域，可以跑 roadmap、修 bugs；当 Synapse/partner-bank 模型不再适配规模和风险时，Mercury 提前迁出并把更多底层能力内化。它值得看，但证据强度更多来自创始人/公司叙事和工程文化材料，硬后果不如 P0 公司密集。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 决策权与授权 ★计分 | • \"autonomous product teams... something like eight people, 1 PM, one designer, six engineers... own invoicing or... wires... run their own roadmap... fix their own bugs.\" -----Immad Akhund / Mercury<br>Mercury 把约 300 人产品/工程/设计组织拆成约 8 人 autonomous product teams，每队拥有一个产品域，可跑自己的 roadmap、修自己的 bugs。<br>• 员工侧称工程/设计对产品方向有真实影响，不需要穿过多层 approval 才能 ship features。-----employee-side material | Mercury 的小队自治不是泛泛敏捷：团队围绕具体金融产品域拥有 roadmap 和 bug ownership，在统一设计/工程标准下减少跨团队协调。偏离度中等，但机制清楚。 | A | 2 | 3 | ↑ |\n| 组织随战略演进的能力 ★计分 | • \"In 2022, we stopped onboarding customers to [Synapse]. And then 2023 we moved off entirely.\" -----Immad Akhund / 2026-04-27<br>Mercury 在 Synapse 2024 年失败前，2022 年停止新增客户，2023 年完全迁出。<br>• \"as you scale, that model starts breaking... the foundation of the customer experience ends up sitting externally versus internally... we brought more and more of that in house\" -----Jason Zhang<br>随着规模扩大，partner bank model 让客户体验基础落在外部，Mercury 逐步把能力带回内部。 | Mercury 能在外部 BaaS/partner-bank 风险暴露前主动改变底层运营边界，把客户体验、ledger/资金控制和合规能力从高风险外部中间层迁回内部。这是金融基础设施公司很实在的组织演进能力。 | A | 2 | 3 | ↑ |\n| 人才密度 ★计分 | • \"The Haskell codebase is genuinely impressive... Mercury can't just hire any experienced backend engineer... need people who either already know Haskell or are motivated enough to learn it... natural filter... care about correctness\" -----Jobs by Culture citing employee review / 2026-04-24<br>Mercury 的 Haskell 代码库和类型系统让银行功能发版更有信心，同时缩小人才池，筛出关心正确性、愿意学习的人。<br>• 〔事实〕senior engineering loop 设置 Craft/type-system round，用代码 review 或 API/数据模型 sketch 筛选能用类型、不变量、错误处理表达正确性的工程师。 | Mercury 用 Haskell/类型系统和 Craft round 做工程人才筛子，筛出的不是普通后端能力，而是金融系统里重视正确性、类型建模和可解释设计的人。偏离度中等偏高，但 C 不满：更多是工程文化和招聘流程信号，缺少员工硬后果/长期汰换数据。 | A | 2 | 2 | ↑ |\n| 官僚层级与 span of control | • 〔事实〕Immad 在观察 Jensen Huang 以 60 个直接下属管理 NVIDIA 后，取消所有 one-on-ones。-----New Economies episode page / 2026-06-10<br>• \"when there's enough layers of management... you do have to have some sort of way to have a top level goal and percolate that through.\" -----Immad Akhund / 2025-08-06 | CEO 试图从传统一对一管理切换到更宽 span、更少同步的工作方式，以降低 CEO bottleneck。机制有趣但证据较薄，作为补充 Alpha 保留。 | A | 2 | 2 | ? |\n| 信息透明与真相上行 | • \"we write... six-ish pages... two to three subjects... discussion topics... appendix... finances projections, hiring plan... no status updates.\" -----Immad Akhund<br>董事会材料从 slides/status update 改成会前 6 页 memo，会议只讨论真正重要的两三个主题。 | Mercury 的董事会信息流把 status update 后置到 appendix，把会议时间留给两三个核心问题。这是提高真相密度的具体机制，但更多停留在董事会层，不支撑高分。 | A | 2 | 2 | ↑ |\n\n        - **盲区 + 下一步**：blind_dims=[]。Mercury 的 outlier 主要是工程正确性、小队自治和底层金融能力内化；它更像 P1 工程化组织 Alpha，而不是高压/硬后果型 P0。\n        - **业务/战略离群(不计入组织分)**：Mercury 的创业公司银行定位、BaaS 迁移、个人银行等业务选择不单独计分；只有当它们对应到团队边界、工程筛子、自治机制或能力内化时计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Mercury/notebook.json 的 notebook records 评分，非实时网搜。\n";
+    const SOFI_MD = "# SoFi — Why attention?   ·   Score 59 · 置信度 RICH · 优先级 P1\n\n        **一句话定性**：SoFi 的 Alpha 更像“银行化 fintech 的风险资本治理 + 平台能力内化”，不是强 outlier 组织机器。它最有辨识度的组织设计，是把 CEO/高管激励同时绑到 TBV/TSR 上行和银行资本红线下行：只要 total risk-weighted capital ratio 低于 10.5%，CEO PSU 100% forfeiture；年度 bonus 又受 Risk Management Effectiveness Assessment 调节。另一个有意义的偏离，是 SoFi 从 fintech/partner 模式演进为银行控股公司，把 SoFi Bank、Galileo、Technisys、FTP 和内部风险/资金系统纳入同一治理/资金/平台边界。但这些更接近受监管金融科技规模化后的硬治理，而不是 Revolut/Coinbase/Ramp 那种明显改写员工日常行为的 outlier operating system。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 激励与所有权 ★计分 | • \"Under the PSU award, our CEO may earn between 0% and 150% of the target number of PSUs... Absolute Growth in Tangible Book Value... TSR modifier...\"；但如果 total risk-weighted capital ratio 在考核期内任何时候低于 10.5%，CEO PSU 立即 100% forfeited。-----SoFi Technologies, Inc.; Anthony Noto / 2025-04-15<br>CEO PSU 在 2024-2026 三年考核期内按有形账面价值增长和相对 TSR 结算，最高可到目标数 187.5%；但总风险加权资本比率低于 10.5% 时全部 forfeiture。<br>• \"Risk Management Effectiveness Assessment\" 会成为整体薪酬决策因素，包括影响最终年度 bonus payout。-----SoFi Technologies, Inc. / 2025-04-15<br>• 〔事实〕2024 年 clawback policy 扩展到所有 SVP/VP，并可在 misconduct related matters 下追回 incentive compensation 和 time-based equity。-----SoFi Technologies, Inc. / 2025-04-15 | SoFi 把银行资本安全、风险管理和高管回报接到同一条激励链：CEO 的长期上行来自 TBV/TSR，但银行资本红线是一票否决；年度 bonus 也被风险管理有效性调节。它不是普通“业绩奖金”，而是在上市 fintech/银行控股公司框架里，把增长、股东回报和风险控制一起写进高管激励。 | A | 2 | 3 | ↑ |\n| 组织随战略演进的能力 ★计分 | • 〔事实〕2022 年 SoFi 完成 Bank Merger，收购 Golden Pacific Bancorp 及其全国性银行子公司；交易后 SoFi 成为银行控股公司，Golden Pacific 作为 SoFi Bank 运营。-----SoFi Technologies, Inc. / 2024-04-10<br>• 〔事实〕SoFi Bank 承接 Checking/Savings、所有新贷款申请、Credit Card 和大多数贷款产品。-----SoFi Technologies, Inc. / 2024-04-10<br>• \"75%-85% of talent\" 被 CEO 描述为投在未上线或非成熟业务上；工程、产品、设计、数据科学人数被 CEO 像现金/资产负债一样每日跟踪。-----Anthony Noto / 2023-07-20 | SoFi 的组织边界从 fintech/外部合作模式演进为银行控股公司内部发起与存款资金支持：银行牌照、SoFi Bank、Galileo/Technisys 技术平台、FTP 资金归因和风险监控进入同一结构。它的偏离不是某个产品，而是用 M&A/牌照/资金框架重画组织和产品运行边界。 | A | 2 | 3 | ↑ |\n| 信息透明与真相上行 ★计分 | • \"We knew where our deposits were every second of the day. Similarly, we knew where our liabilities were every second of the day.\" -----Anthony Noto / 2023-07-20<br>Noto 说 SoFi 每一秒都知道存款和负债在哪里，而监管者接触到的多数机构做不到。<br>• 〔事实〕credit policy 有 early warning dashboard，覆盖外部、内部、宏观、微观和 loan-performance signals；信号变红时会收缩信贷、降低 underwriting tiers。-----Anthony Noto / 2025-04-30<br>• 〔事实〕客户社区、beta group、ambassador group 和 member advisory board 会向公司和 executive team 反馈表现；每日 NPS tracker 发给 leadership team。-----Jean-Michel Hoffman / SoFi material | SoFi 把资金、负债、信用和客户体验信号做成高管可见的日常仪表盘：存款/负债实时可知，信用风险进入 early-warning dashboard，客户反馈进入 leadership cadence。它能提高真相上行，但更像成熟金融机构的控制系统，偏离度中等。 | A | 2 | 2 | ↑ |\n| 战略—结构匹配 | • \"Following the acquisition of Galileo... shared operational services... legal and compliance, human resources, IT, corporate development and strategy\" -----SoFi Technologies, Inc. / 2022-03-15<br>收购 Galileo 后，SoFi 继续向 Galileo 提供法律合规、人力、IT、公司发展与战略等共享服务。<br>• 〔事实〕SoFi 高管结构按 Spend/Invest/Protect/Save、Borrow 等 group business units，并配 CFO、CRO、CTO、GC。-----SoFi Technologies, Inc. / 2025-04-15<br>• 〔事实〕SoFi 实施 FTP 框架，把净利息收入按资金使用/提供归因到业务分部，同时把利率风险集中到 Corporate/Other 监控管理。-----SoFi Technologies, Inc. / 2024-04-10 | SoFi 用“独立平台业务 + 母公司共享中后台 + 资金转移定价”的结构来管理多产品金融平台。Galileo 保留平台业务身份，同时接入 SoFi 共享服务；FTP 把资金收益/风险归因到业务分部。机制清楚，但属于规模化金融集团的正常硬治理，非 Top-3 强 outlier。 | A | 2 | 2 | ↑ |\n| 决策权与授权 | • \"we've tested hundreds of ads on Zappi, and we've had almost a hundred that didn't make the cut... tens of millions of dollars\" -----Jean-Michel Hoffman<br>SoFi 在 Zappi 上测试数百个广告，近 100 个没有通过，影响数千万美元媒体投放。<br>• 〔事实〕SoFi 实施 DACI decision-making framework，并做培训刷新。-----SoFi / 2020-12-14 | SoFi 在营销投放中把外部反馈测试变成放行门，避免少数 creative decision makers 拍脑袋决定数千万美元广告；DACI 提供决策角色框架。它是有效管理机制，但在同类公司中不够反常。 | A | 1 | 3 | ↑ |\n| 红旗 | • 〔事实〕2017 年 SoFi 快速增长期的工作文化被描述为 frat-house-like；创始人 Mike Cagney 被指不当谈话、性骚扰诉讼，并有员工称因反对有问题文化而被污名化。-----Fortune / 2024-05-16<br>• Blind 员工侧称部分团队 top-down、无 pushback、状态检查和微管理严重。-----Blind anonymous commenter / 2026-07-01 | SoFi 有历史和员工侧红旗：早期文化问题惩罚反向真相上行，近年员工侧也有 top-down/微管理反馈。这些是风险提示，但材料分散，且不构成当前稳定运行的 outlier 组织设计。 | A/RF | 2 | 2 | ↓ |\n\n        - **盲区 + 下一步**：blind_dims=[]。SoFi 有组织设计材料，但 outlier 主要集中在受监管金融集团的风险资本治理和银行化结构演进；不是强 P0 operating system。若要上调分数，需要看到这些风险/资本/平台机制如何持续改变一线团队权责、预算、清退或产品发布边界。\n        - **业务/战略离群(不计入组织分)**：SoFi Bank、Galileo、Technisys、Konecta、会员增长和金融产品组合本身不计入组织分；只有当它们对应到激励、风险仪表盘、资金归因、共享服务或组织边界时计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/SoFi/notebook.json 的 notebook records 评分，非实时网搜；records=989，date_fill=76.85%，blind_dims=[]，chunk_status={'RICH': 16, 'THIN': 2}。\n";
+    const PAYPAL_MD = "# PayPal — Why attention?   ·   Score 52 · 置信度 RICH · 优先级 P1\n\n        **一句话定性**：PayPal 不是当前强 outlier 组织机器，更像一家老牌支付公司在重构中的“legacy-to-customer-back”组织。它真正值得看的机制有三类：一是 Dan Schulman 时代把员工财务健康做成 NDI owner metric，从 4%-6% 净可支配收入基线推到 20% 目标，并配套降医疗成本、涨薪、全员 RSU；二是 treasury 把现金定位、账户、FX、wire processing 从多表格/多系统/人工验证迁到 TMS 和 AI 自动化；三是新管理层把 PayPal 从历史产品/职能孤岛重组为 consumer、SMB、enterprise/large merchants 三类 customer segment。它有组织设计，但更多是大公司修复和转型中的准 Alpha；早期 PayPal 的 one-thing owner、反会议、个人创新神话不应计入今天 PayPal 的主分。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 激励与所有权 ★计分 | • \"the net disposable income of a large part of PayPal's population was between four and six... the minimum somebody needs to feel financially healthy and secure is twenty NDI...\" -----Dan Schulman<br>PayPal 发现大量员工净可支配收入在 4%-6% 之间，而财务健康和安全所需最低 NDI 是 20%。公司因此设计项目，把每位员工的 NDI 提高到最低目标。<br>• 〔事实〕2019 年 10 月，PayPal 推出一组综合变化：涨工资、降低医疗成本、授予股权、提供财务规划工具。-----Dan Schulman / LEADERS Magazine / 2022-04<br>• \"We gave every single person inside PayPal restricted shares of the company...\" -----Dan Schulman<br>PayPal 给公司内每个人授予限制性股票，让员工分享公司成功，并配套金融教育/金融素养项目。 | PayPal 把员工财务健康从福利口号转成可度量 owner metric：不是统一发福利，而是用 NDI 诊断员工是否有真实财务安全感，再通过医疗成本、社区工资、全员股权和金融教育组合干预。这个机制有成本、有指标，也会改变员工与公司成功之间的经济关系。 | A | 2 | 3 | ↑ |\n| 组织随战略演进的能力 ★计分 | • \"Cash positioning was standardised across regions on TMS, retiring 90 spreadsheets and saving approximately 1,700 hours annually... cash positioning accuracy above 99%... global automated cash visibility... close to 100%...\" -----PayPal treasury team / Deutsche Bank flow / 2026-05-11<br>PayPal treasury 跨地区将现金头寸标准化到 TMS，退役 90 个电子表格、每年节省约 1,700 小时；支付数据进入预测后现金头寸准确率超过 99%，全球自动现金可见性接近 100%。<br>• 〔事实〕PayPal Treasury 成员被邀请识别最繁琐流程，并说明 AI 在哪里能创造最大价值；许多 AI initiatives 并非自上而下，而是来自团队内部。-----Deutsche Bank flow / 2026-05-11 | PayPal 的 treasury 转型是局部但真实的组织边界重构：一线流程 owner 把痛点上报为 AI/自动化项目，现金、账户、FX、wire processing 从多表格/多系统/人工验证迁到 TMS 和 straight-through processing。它能说明 PayPal 在关键金融后台里有“流程 owner → 自动化系统”的当前运行机制。 | A | 2 | 2 | ↑ |\n| 战略—结构匹配 ★计分 | • \"Organizing customer back was one of the first moves that we made... we reorganized so that we actually were serving consumers, small businesses and then enterprise customers / large merchants... need a general manager and a product leader...\" -----Alex Chriss / 2025-07-23<br>Alex Chriss 称 customer-back 组织是其加入后最早动作之一：PayPal 重组为服务消费者、小企业、企业/大型商户三类客户，每类都有 GM 和 product leader。<br>• 〔事实〕PayPal 过去 GTM 基于孤岛，不同团队向同一商户分别销售各自产品；现在 GTM 聚焦完整 value proposition，让商户有单一联系点。-----Alex Chriss interview summary / 2025-04-28 | PayPal 正在把历史产品/职能孤岛重画成 customer segment 边界：consumer、SMB、enterprise/large merchants 各有 GM 和 product leader，GTM 也从多产品分头销售改成面向商户的单一价值主张。这是合理的 customer-back 重组，但仍偏转型中，尚未显示足够硬的员工行为后果。 | Δ/A | 2 | 2 | ↑ |\n| 决策权与授权 | • \"we've tested hundreds of ads on Zappi, and we've had almost a hundred that didn't make the cut... tens of millions of dollars\" -----Jean-Michel Hoffman<br>PayPal 在 Zappi 上测试数百个广告，近 100 个没有通过，影响数千万美元媒体投放。<br>• 〔事实〕PayPal 实施 DACI decision-making framework，并用培训刷新帮助员工做原则驱动的决策。-----SoFi Sitcom? / PayPal source note in notebook | PayPal 在营销投放中把外部反馈测试变成放行门，避免少数 creative decision makers 凭直觉决定数千万美元广告。DACI 也提供角色框架。机制有效，但在大公司里不够反常，作为补充而非主分。 | A | 1 | 3 | ↑ |\n| 康威定律 / 组织即产品 | • 〔事实〕PayPal 与 Venmo P2P 应用在十多年后首次互操作；此前因 Braintree 遗留技术长期分离。-----Alex Chriss / American Banker context / 2025-12-02<br>• 〔事实〕员工侧聚合把 slow product rollouts、duplicative teams、unclear ownership 与 disparate tech stack 连接起来；当前 GTM/产品重组试图修复这些历史接缝。-----Glassdoor summary / Value Philosopher / Alex Chriss interview | PayPal 的产品/组织接口问题本身是负向信号：历史产品孤岛和技术债导致 PayPal/Venmo、GTM 团队和平台能力长期分裂。当前互操作和 customer-back 重组是在修复接缝，而不是已经形成强 Alpha。 | Δ/RF | 1 | 2 | ↓ |\n| 红旗 | • \"the pace of change and execution was not in line with the Board's expectations\" -----PayPal Board of Directors / 2026-02-03<br>董事会称过去两年 turnaround 虽有进展，但变化和执行速度不符合预期，因此任命 Lores 进入下一阶段。<br>• \"we have launched a lot of great innovation to market but we haven't had enough effort... to make it real... moved to launch the next version before really maximizing the value...\" -----Enrique Lores / 2026-05-27<br>Lores 称 PayPal 推出很多创新，但没有投入足够资源在各国真正落地，常在最大化现有产品价值前转向下一版本。 | 董事会用 CEO 更替处理执行速度不达预期，说明 PayPal 的主要问题是大公司转型执行力而非缺少想法。Lores 的表述也指向同一红旗：发布很多，但落地、国家投入、团队专注不足。 | RF/Δ | 2 | 3 | ↓ |\n\n        - **盲区 + 下一步**：blind_dims=[]。PayPal 的当前组织偏离主要是大公司修复型：员工财务健康机制、treasury 自动化、customer-back 重组和执行速度治理。若要上调分数，需要看到 customer segment / GTM / platform 重组已经改变一线团队权责、预算、发货速度或产品采用结果，而不只是新 CEO 转向叙事。\n        - **业务/战略离群(不计入组织分)**：PayPal/Venmo 互操作、Fastlane、AI 工具、产品发布、商户增长本身不计入组织分；只有当它们对应到组织边界、决策门、流程 owner、自动化系统或员工激励时才计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/PayPal/notebook.json 的 notebook records 评分，非实时网搜。\n";
+    const ROBINHOOD_MD = "# Robinhood — Why attention?   ·   Score 78 · 置信度 RICH · 优先级 P0\n\n        **一句话定性**：Robinhood 的组织操作系统 = AI compute 当作 headcount + impact Top150 人才社区 + GM/PnL ownership。它不是普通 fintech 的“AI-first / customer-first / move fast”叙事，而是把组织资源配置、人力扩张和业务责任都改写成更硬的运行规则：团队申请新增 headcount 前要证明 AI agent 已经充分接入 workflow；全公司各层级按 impact 选出 Top150，既拿战略/愿景反馈权，也连接 discretionary compensation；2022 年大重组后，业务 GM 对各业务线承担 PnL 和 broad responsibility。代价是组织持续处在高压、低 slack、频繁重排和绩效淘汰环境里，员工侧能看到 whiplash、job security 波动和裁员冲击。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 人才密度 ★计分 | • \"We want to make it. I mean, sometimes it's pretty obvious that for whatever reason we made a hiring mistake, usually that someone's not a fit. And at that point we want to make it as easy as possible. So yeah, if it's t… -----Baiju Bhatt / 2026-03-03<br>如果明显是招聘失误或不匹配，三周后继续下去也没有意义；一旦知道不合适，等六个月太久。若看到某人有潜力且在某方面异常优秀，可以给时间，但 Robinhood 试图让移除低绩效者在流程上非常容易。<br>• \"Vlad Tenev: Basically, if you're in the top 150 people in the company by impact across all levels, it's a real community. So it started out as compensation. John Collison: Is this model modeled after the Apple Top 100? … -----Vlad Tenev / 2025-08-13<br>如果某人是全公司各层级按 impact 评出的前 150 人，就进入一个真实社区；它最初以薪酬为中心，把 discretionary budget 分给最好的人，后来变成战略/愿景反馈社区，并在各城市组织活动和晚餐。<br>• \"**Vlad Tenev:** Roughly every year we try to look at the document, revisit it, we get our best people around the company. I try to get together people at all levels who are just, you know, the highest performers. That’s… -----Vlad Tenev / 2026-02-03<br>Vlad Tenev 说，大约每年都会回看并重审这个愿景文件，把公司各处最优秀的人聚在一起。他会尽量找来各层级最高绩效者，大约 150 人，其中包括 IC 和更初级的人；通常一年一到两次把他们聚到一起。<br>• \"### Thread 2: Robinhood layoffs - 2026-06-18T03:00:00.000Z · https://www.teamblind.com/post/robinhood-layoffs-ywln4npc I am negotiating my offer rn and wonderi… -----Blind anonymous thread author and commenters / 2026-06-18<br>Blind 讨论称 Robinhood 刚裁员但仍在大量招聘；评论称裁员很大程度上基于绩效，且仍在积极招聘；另有人称看到 LinkedIn 上有人 offer 被撤，原本一周后入职。 | Robinhood 的人才密度不是普通 high bar 叙事：招聘错误可在三周级别处理，不把六个月 PIP 当默认；Top150 impact community 把最高绩效者从层级中抽出，连接薪酬、战略反馈和 CEO 视野；员工侧还能看到绩效裁员与持续招聘并行。这个机制有短周期、有硬后果，也有明显员工侧成本。 | A | 3 | 3 | ↑↓ |\n| 战略—结构匹配 ★计分 | • \"For software engineering, Robinhood tracks the percentage of code commits generated by AI alongside total monthly commits per engineer. The second metric is critical; it ensures that AI is not just doing a larger share … -----FS Blog / 2026-03-03<br>在软件工程上，Robinhood 同时跟踪 AI 生成代码提交占比和每位工程师每月总提交数。Vlad 透露，Robinhood 现在把 AI compute 当作 headcount；规划对话里，团队被问到下一年需要多少 compute，而不只是需要多少人。每个团队在申请新增 headcount 前，必须证明自己已经…<br>• \"_“You want to make those partners feel as owners in the product. As product owner, the engineering manager feels, or, the designer feels, right? The legal partner or the compliance person should feel as motivated to del… -----Abhishek Fatehpuria / 2026-04-23<br>“你希望这些伙伴像产品 owner、工程经理或设计师一样，对产品有 owner 感。法务或合规伙伴应该和其他人一样有动力，把出色的产品推向市场。”Robinhood 在 2022 年转向 GM 组织，一部分是为了产品速度；当合规、法务、运营、产品和工程都汇入同一个 GM，它们在结构上就在同一支队伍里。<br>• \"But yeah, the flip side is if everything’s functional and you’re rolling out multiple businesses, then nobody owns the PNL (profit-and-loss) of those businesse… -----Vlad Tenev, co-founder and CEO of Robinhood / 2025-04-14<br>如果所有东西都是职能制，而你在推出多个业务，那么没人拥有这些业务的 PnL。除了最顶层的人之外，没有一个人为自己所做业务的结果而寝食难安；对 Robinhood 这种多产品线、多实体业务来说，这是一个缺陷。 | Robinhood 把结构设计直接连到资源配置：AI 不是普通工具试用，而是进入 planning 语言，compute 与 headcount 被放在同一张资源表里；团队要先证明 AI agent 已被充分使用，才有资格申请更多人。另一条结构偏离是 GM/PnL ownership：从纯职能制转向业务 GM 承担多业务线结果，让产品、工程、合规、法务、运营围绕同一业务结果汇合。 | A | 3 | 2 | ↑ |\n| 决策权与授权 ★计分 | • \"On August 2, 2022, we announced the August 2022 Restructuring, which involved approximately 780 employees, representing approximately 23% of our full-time employees at the time, the planned closure 135 of two offices, a… -----Robinhood Markets, Inc. / 2023-12-31<br>2022 年 8 月 2 日，我们宣布 2022 年 8 月重组，涉及约 780 名员工，约占当时全职员工的 23%，并计划关闭两个办公室等事项。这些行动是公司重组为 GM 结构的一部分，在该结构下，GM 已经承担起对各个业务的广泛责任。<br>• \"我会努力明确我们的目标和最终目标，并给予那些精通细节、能够专注于自己工作的人很大的自主权，让他们决定如何实现目标。这样，他们就会成为项目的主人，承担责任。所以我不会对所有事情都指手画脚。对于一些事情，我会有一些意见——比如我熟悉的产品、活动的举办方式、发布会的方式——但我明确表示，我的总经理、产品负责人以及那些与我关系密切的人可以否决我的意见，如果他们觉得我的意见不对，我鼓励他们大声斥责我，说我是个混蛋。\" -----Vlad Tenev<br>• \"Well now, you know, the non engineers can do them themselves and it's just like a big 0 to 1 unlock. -----Vlad Tenev / 2026-03-18<br>而现在，非工程师可以自己做这些事情，这就像一个巨大的从 0 到 1 的解锁。 | Robinhood 的授权不是单纯“empower teams”：2022 年约 23% 员工受影响的大重组把业务责任放到 GM 结构里，GM 对 individual businesses 承担 broad responsibility；CEO 同时公开允许 GM / 产品负责人否决自己意见。AI 内部工具又把一部分自动化执行权从工程排期转给非工程团队，改变“谁能发货/谁需要等工程”的边界。 | A | 2 | 3 | ↑ |\n| 信息透明与真相上行 | • \"Yeah, so weekly leadership meeting is a big meeting. There's, there's a lot of people involved and I like having large groups of people involved because then e… -----Baiju Bhatt / 2026-03-03<br>每周领导会议是一个大会议，很多人参与，因为每个人都能听到其他人在想什么；一对一基本按需，只在关键事项或重要决策时进行。会议会传递重要信息并审视目标，用绿/黄/红表示进展；绿色不谈，红色目标需要审视。<br>• \"I think that sometimes it's. It's really nice to lighten up some extremely serious things so that people actually enjoy talking openly about, you know, goals t… -----Baiju Bhatt / 2026-03-03<br>有时把极其严肃的事情稍微轻松化，会让人们真正愿意公开谈论进展不顺的目标。假设领导团队每个人都很强，所以事情不顺通常有原因，不只是努力不够；多人的视角能帮助快速改进和扭转。 | Robinhood 的领导节奏有一个中等强度的真相上行机制：大范围 weekly leadership meeting 让目标状态在更多人面前暴露，green 不耗时，red goals 被拿出来诊断，且失败目标不直接归因于个人努力不足。它比普通状态汇报更具体，但主要来自创始人侧表述，缺少员工侧证明坏消息真的能无损改变资源和责任。 | A | 2 | 2 | ↑ |\n| 官僚层级与 span of control | • \"We believe in doing more with less. Our hiring and promotions aren't about who's led the biggest team, but who's led lean teams to big results. We care about execution, not title. Prioritizing delivery over hierarchy he… -----Robinhood<br>我们相信以更少资源做更多事。我们的招聘和晋升不看谁带过最大的团队，而看谁带领精干团队取得大结果。我们重视执行，而不是头衔。把交付置于层级之上，帮助我们即使在当前规模下也像创业公司一样运作。<br>• \"**Brian Halligan:** How painful is it coming up with that list, and how pissed are people when they’re like a director or VP and don’t get invited to that and the individual contributor that works for them does? **Vlad … -----Vlad Tenev / 2026-02-03<br>Brian Halligan 问：列这个名单有多痛苦？当一个 director 或 VP 没被邀请、但向他汇报的 IC 被邀请时，人们会有多生气？Vlad Tenev 答：你必须尽可能按 meritocracy 来做。通常我发现人们知道谁是最好的人。你问别人，他们会说，是的，那个人就应该在那个会里。 | 反头衔通胀是 Robinhood 的补充信号：晋升和招聘语言明确反对“带大团队=更高地位”，Top150 impact community 可以让 IC 越过管理层进入核心战略/愿景反馈圈。它有偏离意义，但还没有充分证据显示 Robinhood 长期维持极宽 span 或低层级结构，因此不作为主分。 | A | 2 | 2 | ↑ |\n| 组织随战略演进的能力 | • \"In 2022, Robinhood declared itself a remote-first company and said it would be \"staying primarily remote.\" Tenev said he regretted his 2022 decision to be remote \"pretty much immediately,\" and a year later, the company … -----Business Insider summarizing Vlad Tenev and Robinhood policy / 2025-08-14<br>2022 年 Robinhood 宣布自己是 remote-first 公司，并称会主要保持远程。Tenev 表示他几乎立刻后悔了这个决定；一年后，公司告知员工预期平均每周至少四天回办公室。<br>• \"we announced two restructurings in April 2022 (the “April 2022 Restructuring”) and August of 2022 (the “August 2022 Restructuring”) that impacted approximately… -----Robinhood Markets, Inc. / 2023-12-31<br>公司在 2022 年 4 月和 8 月宣布两次重组，影响约 1,100 名员工并缩减招聘计划；公司持续评估人员配置是否成本高效，并在发现生产率提升和精简运营模式下有更高效率机会时，不时削减某些部门人员，同时继续服务和创新。<br>• \"we try never to have slack. I think for that particular case, when new information comes in you have to reprioritize in real time... we had a lot of the regula… -----Vlad Tenev / 2026-02-03<br>我们尽量不保留闲置冗余。新信息出现时必须实时重排优先级；因为已有监管基础设施，他们把原本先发期货 outrights 的顺序翻转，先把预测市场推给客户，延后 outrights。 | Robinhood 的组织演进能力有强烈双面性：它能快速推翻 remote-first、持续压缩 staffing、实时重排产品优先级，也能把 2022 大裁员后的 leaner operating model 常态化。但这些更像高压演进和补债混合体，而不是低戏剧性、稳定可复述的组织升级节奏。 | Δ/RF | 2 | 2 | ↑↓ |\n| 红旗 | • \"- 2026-02-12，Recruiter，Menlo Park，reviewId 102807845： \"Teams are frequently asked to “move fast” without the infrastructure or resourcing required to do so sus… -----Glassdoor Recruiter, Menlo Park, reviewId 102807845 / 2026-02-12<br>招聘员工称，团队经常被要求在没有足够基础设施或资源的情况下快速推进；“战略”项目几乎隔天启动，却在充分跟进前改变方向，造成冲击和士气问题。<br>• \"- 信号：员工关系里有“高福利 + 高挤压 + 高流动容忍”的组合。为什么反常：上市、受监管公司通常需要建立长期稳定雇主关系；评论却同时出现好福利、好人、强产品，以及 secret layoffs、silent-firings、turnover as strategy、no job security。它可能说明组织在…\" -----Glassdoor employee reviews summarized by channel pipeline<br>• \"Took us all by surprise. People let go lost their slack access but their slack account aren't deactivated yet. Don't know who's let go. -----Blind anonymous commenters / 2026-06-16<br>这让我们所有人都措手不及。被裁的人失去了 Slack 访问权限，但他们的 Slack 账户还没有被停用。我们不知道谁被裁了。 | Robinhood 的高速度机制有可见副作用：低 slack、频繁重排、战略项目反复启动/转向、裁员与招聘并行、员工对 job security 的不确定感。这些不是主分 Alpha，但它们说明 Robinhood 的偏离不是“干净的高绩效”，而是带有高压和控制债的组织系统。 | RF | 2 | 2 | ↓ |\n\n        - **盲区 + 下一步**：blind_dims=[]。Robinhood 已有多条可复述的 outlier 机制；若要继续验证，优先看 AI compute-as-headcount 是否真的改变各业务线预算/HC 审批，以及 Top150 impact community 是否持续影响薪酬、战略反馈和晋升，而不是只是一年一两次的高绩效者聚会。\n        - **业务/战略离群(不计入组织分)**：prediction markets、24 Hour Market、银行牌照取舍、活跃交易者战略、单 App 金融平台和产品发布 cadence 本身不计入组织分；只有它们落到 GM/PnL owner、AI headcount planning、非工程团队自动化权限、人才筛选和资源重排时才进入组织 Score。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Robinhood/notebook.json 的 notebook records 评分，非实时网搜；records=1035，date_fill=60.87%，blind_dims=[]，chunk_status={'RICH': 16, 'THIN': 1}。\n";
+    const STRIPE_MD = "# Stripe — Why attention?   ·   Score 100 · 置信度 RICH · 优先级 P0\n\n        **一句话定性**：Stripe 的“组织操作系统”= 写作默认公开 + 极慢质量优先的人才筛 + 把金融基础设施做成可复用平台接口。它不像 Revolut 那样靠高压汰换制造组织离群，而是把复杂金融网络翻译成工程抽象、文档记忆和小团队自治；真正的 outlier 不在“高 bar / customer first”这些通用口号，而在长期运行的机制：全公司默认写下来、hiring committee 以 no-hire 为职责、支付方式和 treasury 被模块化成可并行接入的底层 rails。代价是高标准与高复杂度会外溢成部分团队的恐惧感、PIP 压力和领导层适配困难。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 信息透明与真相上行 ★计分 | • \"We were encouraged to write everything down and then share it with the entire company (whether it was a meaningful strategy document or a mundane user email). -----Brie Wolfson / 2022-02-02<br>我们被鼓励把所有事情写下来，然后分享给全公司，无论是重要的战略文档，还是普通的用户邮件。\"<br>• \"But I was like, all right, I’m going to publicly get up in front of the company and have failed on this goal, but we disagree. We agreed to disagree that this is possible. What’s also funny though is I was like, I think… -----Claire Hughes Johnson / 2024-02-27<br>Claire 描述自己在与 Patrick 对某个目标是否可达成有分歧后，仍会公开站到全公司面前承认目标失败，同时说明双方同意保留分歧。她说做法是“公开在所有人面前做 retro postmortem”，用 Stripe 喜欢的“学习”语言讲：我犯了什么错、会做什么不同、下一步怎么看、现在怎么到达那里。\"<br>• \"Speaker 0 所以当我说你可以点击查看是否有新的回顾文档时——其实总会有新的回顾文档。 So when I said, like, you can click in to see if there's a new retrospective, there was always a new retrospecti…\" -----Brie Wolfson | Stripe 的信息透明不是普通 all-hands 或 founder communication，而是把“写下来并默认全公司可读”做成组织基础设施：战略文档、用户邮件、retro/postmortem 都进入共享文本层，让一线事实、失败复盘和判断依据跨层级流动。<br>• 这类机制对同类金融基础设施公司有明显偏离度：在强监管、高可靠性、客户资金相关业务里，信息通常更容易被权限、职能和经理链切碎；Stripe 反而把默认写作和内部公开作为协调系统。 | A | 3 | 3 | ↑ |\n| 人才密度 ★计分 | • \"Any hiring I’m doing, I take it very seriously. I do my own reference calls. I am the first one to question, “Is this the right person?” In the hiring committee meeting. I’m not just pushing to hire. So that’s one I act… -----Claire Hughes Johnson / 2021-10-25<br>我做招聘时会亲自做 reference call，并在 hiring committee 中首先质疑“这是不是对的人”。我告诉 Stripe 的招聘人员，他们的职责是发现 no-hire；我们不只用招聘目标激励 recruiter，也衡量候选人是否留下、是否是对的人。\"<br>• \"I think maybe the biggest thing, though, was being okay taking a really long time to hire people. Being painfully persistent in doing so. It took us 6 months to hire the first two people. In the 6 months after that, we … -----Patrick Collison / 2015-11-28<br>Patrick 说 Stripe 接受花很长时间招聘：前两个人花了 6 个月，之后 6 个月只招了 3-4 人；做过 week-long trials，有些候选人不合适或一开始不愿加入。招聘第一筛选标准是质量而不是候选人的已表达兴趣，很多 Stripe 员工花了多年才招进来。\"<br>• \"But for our recruiters, from day one, when we talk about the metrics and the measurement of how we do, it is quality above quantity. So there have been times w… -----Claire Hughes Johnson / 2018-10-19<br>对招聘团队，从第一天谈指标和衡量时就是质量高于数量；有时名单上的人没有全招，他们对此很满意。Stripe 的 hiring committee 里通常由 recruiter 主持讨论，并会根据反馈总结说担心某人不合适或大家只是弱支持；真正…\"<br>• \"The biggest indicator that I could find in our time at Stripe when we had that issue was, uh, people who joined as leaders, as a, you know, executives and didn… -----Claire Hughes Johnson / 2023-04-13<br>Claire 说，在 Stripe 处理这个问题时，她能找到的最大指标是：加入的 leader/executive 如果在前三到六个月没有招到任何优秀的人，就是有问题的信号。\"<br>• \"Risk Strategist，Austin，2026-05-11，reviewId 103919380：“inconsistent expectations, anything less than best is not enough for managers, forceful fitting of curve … -----Glassdoor reviewer, Risk Strategist, Austin / 2026-05-11<br>一名风险策略员工称：期望不一致，低于 best 就不被经理接受，并且存在把员工强行拟合到 PIP 曲线的情况。\" | Stripe 的人才机制不是泛泛“高 bar”，而是把 no-hire 权力制度化：leader 亲自 reference call，hiring committee 中主动质疑是否该 hire，recruiter 的职责包括发现 no-hire，招聘团队不以填满 headcount 为唯一成功标准。<br>• 早期“6 个月只招前两人、再 6 个月只招 3-4 人”和 week-long trial 显示质量阈值真实牺牲速度；leader 入职 3-6 个月能否招到优秀人才，也被用作判断该 leader 是否有问题的早期指标。<br>• 员工侧 PIP/曲线拟合反馈说明这套高标准在部分团队转化成硬后果，保留为代价信号；它提高 C，但方向不是单纯正面。 | A | 3 | 3 | ↑↓ |\n| 康威定律/组织即产品 ★计分 | • \"**PATRICK COLLISON:** Well, we announced yesterday that we now support 125 payment methods, which I think is the most that anyone supports. But more importantly, we’ve done two things. One, we’ve built a—we’ve kind of r… -----Patrick Collison, John Collison, and Claire Hughes Johnson<br>Patrick 说 Stripe 内部重新架构了平台，以便更快增加支付方式，并能把规格说明交给 LLM 生成集成；John 将其称为支付方式的“device drivers”，并说现场已有支付方式方在用这种 driver 接入 Stripe。\"<br>• \"**PATRICK COLLISON**: An underlying treasury platform that enables us to build a lot of the core functionality in Stripe once. And then, build ingress and egress rails for different banking networks and systems in diffe… -----Patrick Collison<br>Patrick 说 Stripe 建了底层 treasury 平台，让核心功能只构建一次，再为不同国家的银行网络搭建进出 rails，但共享一个 treasury 和 liquidity 管理层；这是多年工程，正在部署到生产，使 Stripe 能在多个市场并行推进。\"<br>• \"We're all trying to impress upon people at Stripe the importance of multi-decadal abstractions. People sometimes respond to that thinking that that's some insanely lofty, implausibly ambitious hyperbola, but no, that's … -----Patrick Collison / 2024-02-21<br>Patrick 说 Stripe 试图让公司里的人理解“跨数十年的抽象”的重要性；API 设计必须考虑能否在 2044 年仍然站得住、世界如何变化仍保持一致，而不是只满足今天的需求。\"<br>• \"**Claire Hughes Johnson:**Exactly. And I think really what it was is they both had a part of their team that was doing the same thing and they were feeling dep… -----Claire Hughes Johnson / 2024-02-27<br>Claire 说，两个团队的一部分在做同一件事，同时又互相依赖，像 yin-yang 一样谁都没有完整图景；她判断需要有人掌握整个事情，因为这不是单纯重复，而是“重复加依赖”，更糟。\" | Stripe 的组织边界跟产品架构一起被重构：支付方式被抽象成类似 device drivers 的接入接口，treasury 能力被做成一次构建、多国 rails 复用的底层平台。<br>• 这不是普通 platform narrative，而是用组织接口降低每个国家、每种支付方式的重复劳动；当两个团队既重复又相互依赖时，通过 leadership intervention 做 de-duping，把端到端控制权收敛到一个 owner。 | A | 3 | 3 | ↑ |\n| 决策权与授权 | • \"There's two ways that product development happens at Stripe, tops down and bottoms up. And when you say, how do we decide what to let people at Stripe explore? There's a ton of exploration that's going on that no mandat… -----John Collison, Stripe co-founder<br>Stripe 的产品开发同时有自上而下和自下而上两种方式；对于探索什么，有大量探索没有 mandate，也没有 sign-off process。Visa 集成团队自下而上发现并预测硬件 failover，提前切换，避免客户中断；在高层约束内，具体做什么通常由团队决定。\"<br>• \"The second thing is to not treat all decisions uniformly. I think the most obvious axes to break them down on are degree of reversibility and magnitude. Things with low reversibility and great impact and magnitude, thos… -----Patrick Collison, co-founder and CEO of Stripe / 2018-05-02<br>Collison 将决策按可逆性和影响大小分类：低可逆、高影响的决策应慎重；其他象限应更灵活、更快。他还刻意让自己少做决策，认为如果 CEO 必须做某些决策，可能说明组织或制度出了问题，因此会把决策推回给应该是领域专家的人。\" | Stripe 的授权机制有明确边界：高层给战略方向和资源约束，团队在边界内可无 mandate/sign-off 做 bottom-up 探索；Visa 集成团队提前切换硬件避免 failover，是一线团队直接处理可靠性风险的例子。<br>• 决策按可逆性和影响大小分级，CEO 明确把本应由领域专家做的决策推回组织。这是有效机制，但在高成熟科技公司里不算最极端 outlier。 | A | 2 | 3 | ↑ |\n| 运营隐喻 | • \"Today, almost all services are auto-deployed and gradually rolled out. Stripe believes that automatically initiated and monitored deployments are more reliable than those “babysat” by humans. Automated rollout can also … -----Gergely Orosz / 2024-01-23<br>现在几乎所有服务都会自动部署并渐进式 rollout。Stripe 认为自动发起、自动监控的部署比由人‘看护’更可靠；自动 rollout 也可以更慢地推进，因为旁边没有急着做下一件事的工程师。\"<br>• \"Most of these services are automatically deployed, so when anybody makes any production-ready change, it just goes into production. It's meticulously and carefully orchestrated: first is just running some small sliver o… -----Patrick Collison / 2024-02-21<br>多数核心服务自动部署，生产就绪变更会进入生产，先跑小流量再逐步扩大；约每天 1000 次部署，同时达到约 99.9995% 可靠性。\" | Stripe 把高可靠金融基础设施的运营判断尽量从人工盯盘转成自动发起、自动监控、渐进 rollout；谁承担发布判断、发布速度如何受控、风险如何递增暴露，都被写进系统机制。<br>• 对同类 fintech/infra 公司而言，自动化发布不罕见，但“每天约 1000 次部署 + 99.9995% 可靠性 + 自动渐进 rollout”共同构成较强 operating design。 | A | 2 | 3 | ↑ |\n| 战略—结构匹配 | • \"And so as we think about that business, and again, what just Stripe has to do to unlock the payment system for that, we have engineers who are based in Singapore. They have built custom integrations with the local Malay… -----John Collison, Stripe co-founder<br>John Collison 说，Stripe 在新加坡有工程师，他们为马来西亚本地银行转账系统做定制集成，并与当地银行系统工程师协作；爱尔兰工程师也处理法国本地卡组织与 Visa/MasterCard 不同的问题。\"<br>• \"**The ‘Remote Hub’** is an engineering group of engineers who work fully remotely. It’s a standalone engineering hub, established in 2019 when Stripe had four engineering hubs – San Francisco, Dublin, Seattle and Singap… -----Stripe / 2023-12-12<br>Stripe 将完全远程工程师正式组织成一个独立 Remote Hub，作为继旧金山、都柏林、西雅图、新加坡之后的第五个工程 hub；官方表述称 Remote engineering hub 与实体 hub 同等地位，有只存在于 Remote hub 的专门工程团队，并设置类似实体 site lead 的 remot…\" | Stripe 的全球支付战略被组织结构承接：工程节点靠近关键支付 rail 与本地银行系统，Remote Hub 被正式等同为工程 hub，而不是把远程员工当作附属资源。<br>• 这是强执行设计，但在全球金融基础设施公司里属于合理匹配，不是最尖的离群机制。 | A | 2 | 3 | ↑ |\n| 官僚层级与span of control | • \"So this is something that Patrick and I actually really agreed on without a lot of discussion, which, you know, is not always the case. It has to do with a combination of optionality as you scale and grow and also cultu… -----Claire Hughes Johnson, former COO of Stripe / 2026-06-23<br>Claire 说，她和 Patrick 在这个问题上几乎不用讨论就一致：这关系到扩张时的可选性和文化；一旦大量使用头衔，就在释放层级和权威信号。她还说这个文化面向到今天仍在 Stripe。\"<br>• \"One funny thing that happens is new things at Stripe are almost always started by really tiny teams. I think that any announcement that you've seen from Stripe probably was a team of less than 10 people when it launched… -----John Collison, Stripe co-founder<br>Stripe 的新东西几乎总是由很小的团队启动；你看到的任何 Stripe 发布，在发布时团队大概率不到 10 人，核心孕育/开发阶段常常不到 5 人。John 认为小团队更容易快速推进，反面是大公司给一个问题堆 300 人、三年后才拿市场反馈。\" | 少 title 和小团队启动新项目是 Stripe 的真实组织偏好：它通过降低头衔信号、用 <10 人甚至 <5 人团队孕育新项目，保留扩张期 optionality。<br>• 但“小团队/少层级”在同类高质量科技公司里已经接近 table-stakes，因此只保留为支持性设计，不进入 Top-3。 | A | 1 | 2 | ↑ |\n| 一号位对组织的亲历程度 | • \"One of the most prolific publishers to Stripe’s internal blog is [CEO and cofounder,] Patrick Collison. -----David Singleton, CTO / 2024-01-23<br>Stripe 内部博客最多产的发布者之一是 CEO 兼联合创始人 Patrick Collison。\"<br>• \"We do our little weekly all-hands, we have a recurring segment of just walk the store -----John Collison / 2026-04-07<br>我们有每周 all-hands，其中有一个固定环节叫 walk the store。\" | Patrick 不是只倡导写作文化，而是亲自成为内部博客高频发布者；John 保留 weekly all-hands 的 walk the store 环节。<br>• 这是 Stripe 写作/信息系统的创始人侧落地证据，但作为独立维度不够离群，主要支撑“信息透明与真相上行”。 | A | 1 | 3 | ↑ |\n| 红旗 | • \"11. Software Engineer，Seattle，2025-10-05，reviewId 100453852：“Management's a fear machine. Question them and you're gone.” -----Glassdoor reviewer, Software Engineer, Seattle / 2025-10-05<br>11. 软件工程师，西雅图，2025-10-05，reviewId 100453852：“管理层是一台恐惧机器。质疑他们，你就会走人。”\"<br>• \"长期以来的人手不足导致Stripe出现了一些尴尬且代价高昂的故障。在2015年出现过一次三小时宕机后，亚马逊和Shopify甚至威胁要走人。但如今，可靠性成了Stripe颇为骄傲的一点：在2021年的假期期间，Stripe的工具总共只宕机了1.2秒。 -----Alex Konrad / 2026-07-01<br>原文为中文：长期人手不足曾导致 Stripe 出现代价高昂的故障；2015 年三小时宕机后，亚马逊和 Shopify 甚至威胁离开。但到 2021 年假期期间，Stripe 工具总共只宕机 1.2 秒，可靠性后来成为其骄傲。\" | 员工侧“质疑管理层会走人”和 PIP/曲线拟合反馈提示：Stripe 的高标准、强写作和高复杂度组织不一定自动产生心理安全，部分团队可能把真相上行压成恐惧。<br>• 早期可靠性故障是扩张债；后续可靠性指标改善，说明更像被工程运营机制吸收的历史债，而非当前持续失控。 | RF | 2 | 2 | ? |\n\n        - **盲区 + 下一步**：blind_dims=[]。Stripe 的材料丰富，低风险不在“信息不足”，而在把强运营实践误判为 costly deviation；人工复核应优先验证：写作默认公开是否仍覆盖高敏感决策、hiring committee 的 no-hire 权力是否仍真实、员工侧恐惧/PIP 信号是否集中在局部团队还是系统性后果。\n        - **业务/战略离群(不计入组织分)**：Stripe 的支付网络、treasury rails、AI/device-driver 式接入有强业务与产品架构离群性；本卡只在这些设计改变团队边界、授权方式和组织接口时计入组织分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Stripe/notebook.json 的 notebook records 评分，非实时网搜；records=2144，date_fill=56.53%，blind_dims=[]，chunk_status={'RICH': 31}。\n";
+    const CHIME_MD = "# Chime — Why attention?   ·   Score 15 · 置信度 RICH · 优先级 Pass\n\n        **一句话定性**：Chime 更像 fintech cohort 的 baseline operating company，而不是 costly-deviation 案例。它唯一有轻度偏离意义的组织设计，是把支付处理、账本、数据/AI 平台和工程团队边界一起内建为 ChimeCore / domain ownership：这让产品、风控、客服和交易基础设施更紧地绑定在同一套内部 stack 上。但在大规模 neobank/fintech 同辈里，核心平台内建、风险/客服平台化、AI 效率化和 customer-first 研究系统都已接近 table-stakes；Chime 没有显示出类似硬淘汰、极端授权、强制性决策闸门、奖金乘数或组织权力重分配的 outlier 机制。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 康威定律/组织即产品 ★计分 | • \"ChimeCore -我們的專有支付處理器和分類帳 截至2025年11月，ChimeCore處理通過我們平台進行的所有支付、轉賬、存款、提款和其他金融交易。ChimeCore在交易處理中的角色不涉及接收或傳輸資金;相反，作爲交易處理器，ChimeCore的角色是促進交易所涉及各方之間必要的消息傳遞（例如，會員、銀行合作伙伴、參與交易的外部銀行和卡網絡），允許處理適用交易。ChimeCore還充當會員帳戶的記錄系統，跟蹤交易、餘額和其他數據。 ChimeCore使我們能夠更好地控制新金融產品的設計方式，並加快我們的產品開發速度。通過ChimeCore，我們可以靈活地直接在我們的平台上構建產品，這使我們能夠避免與第三方供應商集成的開發週期，第三方供應商通常具有預配置的產品模板。\" -----Chime Financial, Inc.<br>ChimeCore 是 Chime 的专有支付处理器和账本，处理平台上的支付、转账、存款、提款和其他金融交易，并作为会员账户的记录系统；它让 Chime 能更好控制新金融产品设计、加快产品开发，并减少第三方供应商模板和集成周期。<br>• \"> \"There are a few things that I have come to have strong opinions about... One is, teams should own their own domains, services and data. You got to own full-stack your domain. You want to minimize coordination between teams and dependencies on teams. And then something that gets often overlooked as you scale is... aligning the organization with the architecture. The organization's growing, the architecture is evolving, but you have to consciously align those two things if you want to maintain a highly functioning engineering team as you grow...” > > > - Ryan King -----Ryan King<br>Ryan King 说，团队应该拥有自己的领域、服务和数据，必须全栈拥有自己的 domain；要尽量减少团队之间的协调和依赖；随着公司和架构增长，必须有意识地让组织和架构对齐。\" | Chime 把支付处理器、账本和会员账户记录系统内建为 ChimeCore，并用 domain/service/data ownership 去对应工程团队边界。这个机制的组织含义不是“自研系统”本身，而是产品开发、交易接口、数据责任和团队边界被同一套内部 stack 约束。<br>• 偏离度是弱到中等：在 fintech 同辈里，核心平台内建和风险/客服平台化已是常见规模化路径；Chime 特别之处只在于 ChimeCore 与 “teams own domains, services and data” 的组织原则同时出现。<br>• 可信度为中等：有公司披露和 CTO 机制表达，但缺少员工侧或第三方证据证明这种 ownership 真的改变了预算权、审批权、绩效责任或团队间权力边界。 | A | 2 | 2 | ↑ |\n\n        - **盲区 + 下一步**：blind_dims=[]。当前低分不是信息不足，而是 RICH 信息下仍未看到足够特别的组织偏离。若要上调，需要补到 ChimeCore / AI / domain ownership 如何硬性改变团队权责、审批、绩效、清退或预算边界的证据。\n        - **业务/战略离群(不计入组织分)**：ChimeCore、Jade、AI support、fraud loss rate、support cost reduction、gross margin 等可以是业务/技术/运营亮点；除非它们改写组织权力和员工行为，否则不进入组织 Score。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Chime/notebook.json 的 notebook records 评分，非实时网搜；records=758，date_fill=66.75%，blind_dims=[]，chunk_status={'RICH': 11, 'THIN': 5}。\n";
+    const DATA = [
+      {
+            "rank": 1,
+            "score": "100",
+            "sortScore": 100,
+            "conf": "RICH",
+            "dir": "↑",
+            "priority": "P0",
+            "company": "Revolut",
+            "oneliner": "Revolut 的组织操作系统 = 极端人才筛子 + Karma 风控奖金乘数 + KPI/事实系统压制中层包装。它不是普通 fintech 的 high bar / ownership / risk control，而是把这些常见主题推到“短周期、硬后果、员工行为被直接改写”的强度：10%-20% forced attrition、2-3 次迭代/两周内判断能不能行、6-week improve-or-remove、低绩效 fired without negotiation；Karma 把 30+ 风险/合规行为加减分并直接影响奖金；KPI-driven 文化让中层不能靠沟通包装坏消息，目标长期不达成就换人。代价同样 revealed：高压、高流失、政治化和“chew you up and spit you out quickly”并存。",
+            "card": "revolut",
+            "searchText": "# Revolut — Why attention?   ·   Score 100 · 置信度 RICH · 优先级 P0\n\n        **一句话定性**：Revolut 的组织操作系统 = 极端人才筛子 + Karma 风控奖金乘数 + KPI/事实系统压制中层包装。它不是普通 fintech 的 high bar / ownership / risk control，而是把这些常见主题推到“短周期、硬后果、员工行为被直接改写”的强度：10%-20% forced attrition、2-3 次迭代/两周内判断能不能行、6-week improve-or-remove、低绩效 fired without negotiation；Karma 把 30+ 风险/合规行为加减分并直接影响奖金；KPI-driven 文化让中层不能靠沟通包装坏消息，目标长期不达成就换人。代价同样 revealed：高压、高流失、政治化和“chew you up and spit you out quickly”并存。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 人才密度 ★计分 | • \"—Forced attrition [принудительный отток]— минимум 10% в год. ... —Я думаю, даже 20% хорошо.\" -----Nikolay Storonsky / 2025-12-17<br>强制流失率最低每年 10%。……我认为甚至 20% 也很好。<br>• \"if you see a person is not performing for 1-2 months, most likely they will not be performing for the next year... Since the person is not delivering within first 3 months, most likely they will not.\" -----Nik Storonsky<br>如果一个人 1-2 个月没有表现，通常下一年也不会表现；如果前三个月没有交付，大概率以后也不会。<br>• \"The Revolut ‘Founder Mode’ — ... Underperformance: 6 weeks to improve or removal\" -----Nik Storonsky (剖析) / 2026-03-17<br>Revolut 的 Founder Mode 对低绩效给 6 周改善，否则移除。<br>• \"Employees with a performance rating that missed expectations significantly ‘will be fired without negotiation.’\" -----Revolut performance material<br>绩效显著低于预期者会被直接解雇，且没有谈判。 | Revolut 的人才密度不是“高标准”口号，而是短周期硬筛选：年度 forced attrition 被 CEO 说成 10%-20%；新人/合作对象在 2-3 次迭代、两周到三个月内被判断；低绩效有 6-week improve-or-remove 和 without negotiation 的硬退出。这个机制直接改写员工行为：适应、交付和证明价值的时间被压到极短。 | A | 3 | 3 | ↓ |\n| 激励与所有权 ★计分 | • \"Karma, our proprietary points-based system that directly links employee behaviour to risk outcomes. Karma assesses engagement with over 30 risk and compliance processes, with employees gaining or losing points based on their actions. The final Karma score has a direct, and potentially significant impact on remuneration, with variable bonus performance increased for high scores and decreased for low scores.\" -----Revolut (Annual Report, Risk Governance — Risk & Compliance Culture) / 2026-03-12<br>Karma 是 Revolut 的专有积分系统，把员工行为与风险结果直接相连；员工在 30 多项风险与合规流程中的行为会加分或扣分，最终分数会直接且可能显著影响可变奖金。<br>• 〔事实〕2025 年 Karma 框架被复核并标准化积分分配，同时提高员工对流程及其影响可变薪酬的透明度。-----Revolut Annual Report / 2026-03-12 | Karma 把风控/合规从“流程要求”变成奖金乘数：员工在 30+ 风险与合规流程中的具体行为被计分，分数直接影响 variable bonus 上下调。这是强 outlier，因为它把 regulated fintech 的合规文化嵌入个人薪酬，而不是停留在培训、政策或事后问责。 | A | 3 | 3 | ↑↓ |\n| 信息透明与真相上行 ★计分 | • \"подчиненные могут напрямую говорить, если им что-то не нравится... никакой политики, поскольку все KPI-driven, все завязано на метриках... средние менеджеры, не могут спрятаться... мы просто смотрим на факты... Важно одно: цель достигнута или нет. Если не достигнута— почему. Если долгое время не достигается, значит, кто-то другой должен попробовать на твое место.\" -----Nikolay Storonsky / 2025-12-17<br>下属如果不喜欢什么，可以直接说；没有政治，因为一切 KPI-driven，都绑定到指标。中层经理藏不住；我们只看事实。重要的是目标是否达成；如果长期不达成，就该让别人试试你的位置。<br>• 〔事实〕Revolut 推出 RevManager Dashboard，以直属下属在季度敬业度调查中的经理相关问题回答形成 5 分制 RevManager Score，并显示行政任务完成、团队流失、高绩效员工离职等数据。-----Revolut Annual Report, Our People / 2026-03-12 | Revolut 用 KPI/事实系统压制 managing up：下属可以直接否定，中层无法靠沟通包装坏消息，评价落到目标是否达成、未达成原因，以及长期不达成时换人。RevManager Dashboard 又把经理行为、团队流失和高绩效员工离职做成可见指标。 | A | 3 | 3 | ↑ |\n| 官僚层级与 span of control | • \"How many did you have now? Like 40, around 44... I have like 32 direct and then like 10-15 indirect.\" -----Nikolay Storonsky<br>采访者问他有多少直接下属，他回答大约 40 到 44 个，其中约 32 个直接、10 到 15 个间接。<br>• \"That's how you end up having many, many reports because if you have philosophy that you only work with self guided people, you filter out a lot of bad people and good people stay...\" -----Nikolay Storonsky<br>他说之所以能有大量汇报对象，是因为只和自驱的人共事，过滤掉很多不合适的人，留下的人能自我驱动并交付。 | CEO 在 10k+ 人规模下仍保留约 40-44 个直接/准直接汇报口，用极宽 span 替代传统多层委托。这个设计依赖前面的人才筛子：只有足够自驱、能直接交付的人留下，CEO 才能用超宽汇报口维持控制面。 | A | 3 | 3 | ↑ |\n| 康威定律 / 组织即产品 | • \"Engineers and designers reporting to them rather than functional heads... [product owners] have: Authority to hire/fire; Budget control without approval layers; Direct P&L responsibility.\" -----David Lobo (High Output Work newsletter) / 2025-07-04<br>工程师和设计师向 product owner 汇报，而不是向职能负责人汇报；product owner 拥有招/裁权、无需审批层的预算控制和直接 P&L 责任。<br>• \"to launch a product, you need to have a very small team of 10 people... Cost will be probably... two, three million pounds, because they're all independent. You can run a lot of bets independently.\" -----Nik Storonsky<br>通常推出一个产品需要约 10 人小团队，工作一年到一年半，成本约二三百万英镑；这些团队彼此独立，可以独立运行很多下注。 | Revolut 的 product owner 不是协调型 PM，而是跨职能小队的 local CEO：工程/设计不按职能墙汇报，owner 同时拥有招裁、预算和 P&L，团队边界、产品边界和结果责任绑定。这个机制让每个产品 bet 像一个小公司，而不是传统矩阵里的项目组。 | A | 3 | 2 | ↑ |\n| 一号位对组织的亲历程度 | • \"Despite rapid scaling to over 50 countries, Revolut's founders still review 100% of screens before shipping\" -----Dmitry Zlokazov / 2025-05-15<br>即使扩张到 50 多个国家，Revolut 创始人仍在发布前审核 100% 的屏幕。<br>• \"We take maybe seven or 10 projects... And we go super deep into them... sitting with engineers, like reading code level and understanding... how it's built exactly and what's the underlying issue.\" -----Dmitry Zlokazov / 2026-06-25<br>Revolut 会从约 100 个项目里选 7 到 10 个对客户最有影响的项目，领导层深入到和工程师坐在一起、读代码级别，理解具体如何构建和底层问题。 | 创始人细节控制不是偶发 review，而是出货门：50+ 国家规模下仍审核 100% 即将 shipping 的 UI，并对最重要项目深入到代码级别。这给自治小队加了一层 founder-level quality bar，也解释了 Revolut 为什么能同时保持小队独立和高控制。 | A | 3 | 2 | ↑ |\n| 运营隐喻 | • \"new bets,\" under which new offerings are launched and evaluated against performance targets before being scaled or discontinued. -----Bloomberg/GFN, reporting Revolut process / 2026-04-24<br>Revolut 的 new bets 策略下，新产品会先推出，并依据绩效目标评估，再决定扩大或终止。<br>• \"you look at how much money they generate after they launch the product, month 1, month 2, month 3, month 4... top 30-40%... one team becomes two teams, three teams, and becomes a department.\" -----Nik Storonsky<br>团队发布产品后，看第 1-4 个月产生多少钱，与其他 bets 比较；若进入前 30-40% 且有增长，就允许增团队，一个团队变两个、三个，最后成为部门。 | Revolut 把新产品当投资组合运行：先用小队 launch，再用前 1-4 个月的收入/增长表现排序，进入前 30-40% 才继续加人，从一个团队扩成多个团队甚至部门。资源配置不是按叙事或资历，而是按早期 performance target 扩张或停止。 | A | 2 | 3 | ↑ |\n\n        - **盲区 + 下一步**：blind_dims=[]。Revolut 已有多条可复述、带硬后果、且跨人才、激励、信息、span、产品组织的 outlier 机制；后续验证重点不是“有没有组织设计”，而是这些机制的长期副作用：高流失、高压、政治化、合规风险与关键人依赖。\n        - **业务/战略离群(不计入组织分)**：多国扩张、牌照、产品组合和金融犯罪防控投入本身不计入组织分；只有当它们对应到 Karma、forced attrition、product-owner 权责、new-bets 资源配置等员工行为机制时才计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/Revolut/notebook.json 的 notebook records 评分，非实时网搜；records=1600，date_fill=88.25%，blind_dims=[]，chunk_status={'THIN': 1, 'RICH': 24}。\n"
+      },
+      {
+            "rank": 2,
+            "score": "100",
+            "sortScore": 100,
+            "conf": "RICH",
+            "dir": "↑",
+            "priority": "P0",
+            "company": "Coinbase",
+            "oneliner": "Coinbase 的组织操作系统 = mission contract 切人员边界 + DRI / internal VC 切决策边界 + agent-first engineering 切工作流边界。它不是泛泛地“高绩效/AI-first”，而是把组织规则做成硬后果：不接受使命边界的人拿退出包离开；未经 Brian/Emilie 批准成立委员会是 fireable offense；venture bets 不需要上级链条一致同意，任何内部投资人愿意出预算即可绿灯；AI adoption 被 CEO 亲自设 deadline，拒绝 onboarding 的工程师会被清退。代价是组织控制很硬，mission purity、AI adoption、权限收紧和裁员流程共同形成高速度、高排异性的运行方式。",
+            "card": "coinbase",
+            "searchText": "# Coinbase — Why attention?   ·   Score 100 · 置信度 RICH · 优先级 P0\n\n        **一句话定性**：Coinbase 的组织操作系统 = mission contract 切人员边界 + DRI / internal VC 切决策边界 + agent-first engineering 切工作流边界。它不是泛泛地“高绩效/AI-first”，而是把组织规则做成硬后果：不接受使命边界的人拿退出包离开；未经 Brian/Emilie 批准成立委员会是 fireable offense；venture bets 不需要上级链条一致同意，任何内部投资人愿意出预算即可绿灯；AI adoption 被 CEO 亲自设 deadline，拒绝 onboarding 的工程师会被清退。代价是组织控制很硬，mission purity、AI adoption、权限收紧和裁员流程共同形成高速度、高排异性的运行方式。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 战略—结构匹配 ★计分 | • \"either they're going to have to go or I'm going to have to go\"；Armstrong 随后给不认同方向的员工提供 exit package，5% 员工接受，公司重新对齐到 mission。-----Brian Armstrong<br>• \"clear contract with our employees\"；Emilie Choi 称 no-politics stance 后约 10% 员工离开，但这让公司明确了办公室里的行为契约。-----Emilie Choi / 2024-06-01<br>• 〔事实〕Coinbase 明确把公司注意力限制在 crypto / economic freedom 使命相关政策，非营利限定约 1%，不在内部倡导与使命无关的政治或社会议题。-----Brian Armstrong | Coinbase 把战略使命直接变成人员边界和工作场域边界：不是只讲 mission，而是允许不认同者退出，并把非使命政治/社会议题排除出工作场域。这个机制把“公司为什么存在”变成“谁适合留下、什么话题能进入组织”的硬规则。 | A | 3 | 3 | ↑↓ |\n| 决策权与授权 ★计分 | • 〔事实〕Coinbase 的 venture bets 不要求从老板到 CEO 一致同意；员工可向产品组负责人、少数 handpicked engineers、Brian 等内部投资人 pitch，只要任一人愿意用自己的预算资助即可 greenlight。Armstrong 称 USDC 曾被他投反对票，但其他人投 yes 并资助，最终跑成大项目。-----Brian Armstrong / 2025-08-20, 2026-01-13<br>• \"fireable offense to start a committee\" without Brian or Emilie approving it. -----Emilie Choi, President and COO of Coinbase<br>• 〔事实〕Coinbase 使用 RAPID 决策文档：所有 input 进入同一文档，一个 decision maker，默认 48 小时内拍板。-----Emilie Choi | Coinbase 的决策设计不是“少开会”口号，而是一套反共识链条：venture bets 用内部 VC 机制绕开层层 veto；DRI/RAPID 把责任压到单一 owner；未经批准成立委员会可被解雇，用硬后果防止责任稀释。 | A | 3 | 3 | ↑ |\n| 康威定律/组织即产品 ★计分 | • 〔事实〕Coinbase 围绕 agent-first infrastructure 重设计工程模型：2,400+ developers 日常使用 Cursor，75% PRs 由 agents 创建，部分 1-2 人团队能完成过去整队才能完成的功能，部分团队 idea-to-production 从 20 天降到 2 天内。-----Cursor case study about Coinbase / 2026-06-23<br>• 〔事实〕Coinbase 把传统 sprint planning 改成 ticket 创建后开发者可直接抓取、Plan Mode 拆解、agent 执行；idea 到 first PR creation 从 8 天降到不到 30 分钟。-----Cursor case study about Coinbase engineering process / 2026-06-23<br>• 〔事实〕公司级 speedrun 中约 800 名工程师同 call，30 分钟提交约 300-400 个 PR；内部 bot 可在秒级把反馈转成 PR，PR review cycle 从约 150 小时降到约 15 小时。-----Chintan Turakhia | Coinbase 把 AI 从工具采用推进到工程组织重构：工程师角色从写/审代码转向定义 intent、验证结果；agent 进入 ticket、PR、review、release loop；speedrun 把新工作节奏强制暴露给整个工程组织。这里的偏离不在于“用了 AI”，而在于 workflow、团队规模、产出指标和协作瓶颈都被 agent-first model 重写。 | A | 3 | 3 | ↑ |\n| 人才密度 | • \"We have a veto right by Brian or me for any new hire. We personally review every new person\" -----Emilie Choi, President and COO of Coinbase<br>• \"some of them didn't and they got fired\"；Armstrong 说未在一周内完成 Cursor / GitHub Copilot onboarding 且无正当理由的工程师被解雇。-----Brian Armstrong / 2025-09-01<br>• 〔事实〕Coinbase 文化文档要求 excellence、hard challenges、100% accountability、ownership；若某人持续没有 raising the team average，公司会 part ways。-----Coinbase Culture Doc via Slab | 人才机制不是普通 high bar：CEO/COO 对每个新 hire 保留最终 review/veto；AI adoption 被转成留任测试；“raising the team average”成为是否继续留在团队的明确标准。它和 mission contract、AI-native 转型一起构成人员筛选系统。 | A | 3 | 3 | ↑↓ |\n| 安全控制 / 红旗 | • 〔事实〕Coinbase 客服人员在 locked-down facilities 和 locked-down Chromebook 中工作；公司持续 red-team 内部人贿赂风险，把更多工作迁往美国/欧洲和 Charlotte 支持设施。-----Brian Armstrong / 2025-08-20<br>• \"we don’t walk them out the door—they go to jail\"；Armstrong 称抓到收受贿赂、偷带手机拍屏等违规者，会移交刑事后果。-----Brian Armstrong / 2025-08-20<br>• 〔事实〕裁员通知中，受影响员工一小时内收到个人邮箱信息，Coinbase 当天移除系统访问权限；Armstrong 承认 sudden and harsh，但称这是保护客户信息的 responsible choice。-----Brian Armstrong | Coinbase 在安全/信任岗位上使用非常硬的组织控制：设施、设备、访问权限、地域迁移、红队测试和刑事威慑一起约束员工行为。它是 crypto custody / customer information 风险下的 outlier 控制机制，方向上带明显红旗：安全优先压过员工体验。 | A/RF | 2 | 3 | ↓ |\n\n        - **盲区 + 下一步**：blind_dims=[]。Coinbase 已有多条可复述、带硬后果、跨 CEO/COO/工程/员工边界的 outlier 机制；后续若要验证质量，优先看这些规则在非工程团队是否同样执行，以及 AI-native workflow 是否带来长期维护债。\n        - **业务/战略离群(不计入组织分)**：USDC、Base、crypto 政策影响力、交易/托管业务本身不计入组织分；只有 internal VC、DRI、AI workflow、mission contract 等改变组织权力和员工行为的部分计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Coinbase/notebook.json 的 notebook records 评分，非实时网搜；records=1567，date_fill=64.26%，blind_dims=[]，chunk_status={'RICH': 24, 'THIN': 3}。\n"
+      },
+      {
+            "rank": 3,
+            "score": "100",
+            "sortScore": 100,
+            "conf": "RICH",
+            "dir": "↑",
+            "priority": "P0",
+            "company": "Kraken",
+            "oneliner": "Kraken 的组织操作系统 = 监管边界硬切市场 + 清层级/极宽 span + 价值观付费退出。它不是普通 crypto exchange 的“安全/合规重视”，而是把“哪里能服务、谁能留下、组织有多少层”都做成硬边界：宁可退出纽约/放弃非法市场份额，也不把合法客户暴露在罚款、刑责和冻结风险里；Sethi/Ripley 继续清除 organizational layers，co-CEO 直接接入 50-70 个汇报对象并用自建 AI bots 摄取信息；Jet Ski Program 给价值观不匹配者两周窗口和四个月薪酬离开。代价是持续滚动裁员、AI efficiency 裁员和强文化边界，组织 Alpha 带明显硬治理/清退红旗。",
+            "card": "kraken",
+            "searchText": "# Kraken — Why attention?   ·   Score 100 · 置信度 RICH · 优先级 P0\n\n        **一句话定性**：Kraken 的组织操作系统 = 监管边界硬切市场 + 清层级/极宽 span + 价值观付费退出。它不是普通 crypto exchange 的“安全/合规重视”，而是把“哪里能服务、谁能留下、组织有多少层”都做成硬边界：宁可退出纽约/放弃非法市场份额，也不把合法客户暴露在罚款、刑责和冻结风险里；Sethi/Ripley 继续清除 organizational layers，co-CEO 直接接入 50-70 个汇报对象并用自建 AI bots 摄取信息；Jet Ski Program 给价值观不匹配者两周窗口和四个月薪酬离开。代价是持续滚动裁员、AI efficiency 裁员和强文化边界，组织 Alpha 带明显硬治理/清退红旗。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 战略—结构匹配 ★计分 | • \"we would be doing them a disservice by... offering our service illegally to another set of users that creates a risk for these guys that we are servicing legally.\" -----Jesse Powell / 2026-06-29<br>Powell 说 Kraken 只服务能够合法服务的客户；若为增长非法服务另一批用户，会给合法客户带来风险。<br>• \"we left New York and we’ve had no business in New York since then.\" -----Jesse Powell / 2018-05-22<br>Kraken 因 BitLicense 离开纽约，此后不在纽约经营。<br>• 〔事实〕Kraken 的 security 组织拆成 red team、blue team、app sec、Security Labs 等边界，并有生态外诈骗/冒充站点 takedown 职责。-----Nick Percoco / Kraken security material | Kraken 把监管可服务边界和客户安全边界变成市场进入/组织配置规则：不能合法服务就不服务，宁可牺牲增长；安全风险也不是公关口号，而是拆成红队、蓝队、应用安全、研究和日常 takedown 的团队边界。 | A | 3 | 3 | ↑ |\n| 官僚层级与 span of control ★计分 | • \"hundreds more have gone... a rolling program of firings over and above the 15% cut late last year... culling aggressively across all functions... improving Kraken’s EBITA\" -----CoinDesk / 2025-04-17<br>Sethi 成为 co-CEO 后，除去年 15% 裁员外，还有跨所有职能的滚动裁撤，目标是改善 EBITA。<br>• Sethi/Ripley 称需要 shed “organizational layers”，让业务 “leaner and faster”。-----Kraken blog cited by CoinDesk / 2025-04-17<br>• \"I’ve got maybe 50-70 reports\"；Sethi 被描述为用自建 AI bots 处理每日信息流并管理 50-70 个直接下属。-----Arjun Sethi / BlockNews Network | Kraken 的去层级不是抽象效率口号，而是持续跨职能裁撤 + 明确清除组织层级 + co-CEO 极宽直接汇报口。它用更少层级和更高 CEO 信息吞吐换速度，代价是组织稳定性和员工安全感下降。 | A | 3 | 3 | ↓ |\n| 激励与所有权 ★计分 | • \"Jet Ski Program\"；任何对文化文件不舒服的人有两周时间离开，并获得四个月薪酬。-----Jesse Powell and Kraken memo, quoted by The New York Times / 2022-06-15<br>• \"If you want to leave Kraken... hopping on a jet ski and heading happily to your next adventure!\" -----Kraken memo / 2022-06-15 | Kraken 把文化/价值观边界做成带现金后果的自选择退出机制：不认同核心价值的人不只是被教育或绩效管理，而是被明确邀请在两周内拿四个月薪酬离开。这个机制直接把“谁适合留下”从软文化变成硬组织筛选。 | A | 3 | 3 | ↓/? |\n| 信息透明与真相上行 | • \"We also have a Red Team... hacks us on a regular basis, from the outside, from the inside, social engineering—any sort of attack factor is completely free game.\" -----Nick Percoco / 2023-11-06<br>Kraken 的红队会定期从外部、内部、社会工程等全攻击面攻击公司。<br>• 〔事实〕红队还用 AI 合成 CSO 声音给员工打电话，测试员工是否会按伪造指令行动。-----Nick Percoco | Kraken 把坏消息发现前置为安全组织机制：红队不是合规演习，而是从外部、内部、社会工程和 AI 深伪等角度持续攻击公司，迫使流程和人员弱点暴露。 | A | 2 | 3 | ↑ |\n| 康威定律 / 组织即产品 | • 〔事实〕Kraken Organizations 产品把 Workflow、Policy、Request、Execute 做成机构客户权限/审批模型；“始终要求审批”开启时 Execute 权限不生效。-----Kraken Support<br>• 〔事实〕Kraken 内部服务通信标准化到 gRPC/Protobuf，跨 Rust、C++、Go、Python、TypeScript 生成客户端/服务端，并自动带出 tracing、retries、deadlines、observability。-----Kraken Engineering / 2025-12-16 | Kraken 把交易所的信任/权限结构产品化：机构客户的审批、执行、策略和请求进入统一模型；内部工程也用协议标准化降低多语言团队接缝。它不是最强计分项，但能说明 Kraken 的安全/治理边界进入了产品和工程接口。 | A | 2 | 3 | ↑ |\n| 红旗 | • 〔事实〕Kraken 因全业务部署 AI 带来的效率裁掉约 150 人，AI 正在更广泛使用。-----Cointelegraph / Bloomberg / 2026-05-18 | AI efficiency 已经进入岗位边界和裁员机制。它强化了 Kraken 的 lean/faster 方向，但也是组织代价：岗位需求被自动化重写，退出压力上升。 | A/RF | 2 | 2 | ↓ |\n\n        - **盲区 + 下一步**：blind_dims=[]。Kraken 的 outlier 主要集中在硬边界治理：监管市场边界、文化退出边界、层级/汇报边界和安全红队边界。后续验证重点是这些机制是否提升执行质量，还是主要转化为持续裁员和控制债。\n        - **业务/战略离群(不计入组织分)**：IPO、交易量、地区扩张、多资产产品本身不计入组织分；只有监管边界、安全组织、Jet Ski、去层级和极宽 span 等改变员工/客户风险边界的机制计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Kraken/notebook.json 的 notebook records 评分，非实时网搜。\n"
+      },
+      {
+            "rank": 4,
+            "score": "100",
+            "sortScore": 100,
+            "conf": "RICH",
+            "dir": "↑",
+            "priority": "P0",
+            "company": "Ramp",
+            "oneliner": "Ramp 的组织操作系统 = outcome-team hard mandate + meeting-default reset + AI-native product/engineering interface。它不是泛泛地“快/AI-first”，而是把速度和杠杆做成组织默认值：团队按客户或业务 outcome 组织，拿到大目标、紧时间线和 fully autonomous resourcing；公司每年默认取消全部会议，必要会议 opt in，让任何员工有权拒绝/取消会议；InSpec / Ramp Inspect 让 PM、设计、运营、部分销售等非传统工程角色直接生成产品改动和 PR，Ramp Inspect 当月承担超过 50% production PR。它的 outlier 是把“少人、更快、更接近客户反馈”的原则真正嵌进团队边界、会议权力、产品接口和代码交付。",
+            "card": "ramp",
+            "searchText": "# Ramp — Why attention?   ·   Score 100 · 置信度 RICH · 优先级 P0\n\n        **一句话定性**：Ramp 的组织操作系统 = outcome-team hard mandate + meeting-default reset + AI-native product/engineering interface。它不是泛泛地“快/AI-first”，而是把速度和杠杆做成组织默认值：团队按客户或业务 outcome 组织，拿到大目标、紧时间线和 fully autonomous resourcing；公司每年默认取消全部会议，必要会议 opt in，让任何员工有权拒绝/取消会议；InSpec / Ramp Inspect 让 PM、设计、运营、部分销售等非传统工程角色直接生成产品改动和 PR，Ramp Inspect 当月承担超过 50% production PR。它的 outlier 是把“少人、更快、更接近客户反馈”的原则真正嵌进团队边界、会议权力、产品接口和代码交付。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 战略—结构匹配 ★计分 | • \"Teams are organized based on customer or business outcomes above all else... Big goals, tight timelines, and fully autonomous resourcing\" -----Geoff Charles / 2023-05-23<br>Ramp 团队首先按客户或业务 outcome 组织；曾给团队自动化 outbound emails 贡献 50% SQL 的 mandate，也给团队三个月搭建 Bill.com 竞品。共同要素是大目标、紧时间线和完全自治资源。<br>• 〔事实〕Ramp 的 AI 组织边界是小中央平台团队负责 LLM/数据/知识/工作流底座、连接器、培训赋能和变革管理，业务团队在其上构建并反馈 roadmap。 | Ramp 把战略目标直接变成小团队 mandate：不是按职能排队，而是给团队一个足够大的业务 outcome、紧时间线和自治资源，让技术团队理解业务并直接对结果负责。AI 平台也按“中央底座 + 业务自建”的边界组织。 | A | 3 | 3 | ↑ |\n| 决策权与授权 ★计分 | • 〔事实〕Ramp 每年一次取消所有会议，只把必要会议重新 opt in；继续公开 days counter 是为了让任何员工都能拒绝或取消会议。-----Eric Glyman / 2026-06-23<br>• \"It's led to person who came up with the creative idea. Be accountable to that idea. It's not done by committee.\" -----Karim Atiyeh<br>由提出创意的人主导并对想法负责，不由委员会来做。<br>• \"give small teams full autonomy over these problems\" -----Karim Atiyeh | Ramp 反转默认会议/委员会权力结构：会议不是默认占用时间，而是每年清零后重新选择；创意由提出者负责，不交给委员会稀释；问题空间被拆给小团队完整拥有。 | A | 3 | 3 | ↑ |\n| 康威定律 / 组织即产品 ★计分 | • \"50% of Ramp's code is built by AI... PMs are shipping tons using InSpec. And so are designers, so are operators... account managers and salespeople are also getting activated\" -----Geoff Charles, CPO of Ramp<br>Ramp CPO 称 50% 代码由 AI 构建，InSpec 让 PM、设计师、运营、部分客户经理和销售也能生成真实前后端产品改动、提交 PR。<br>• \"RAMP Inspect is responsible for over 50% of PRs that we merge to production.\" -----Ian<br>Ramp Inspect 当月负责超过 50% 合并到生产环境的 PR。 | Ramp 把产品接口、代码上下文、设计组件和自动 PR 审核做成 AI-native 工作流，非传统工程角色也能从客户反馈直接生成真实产品改动并进入工程队列。产品架构接口因此重画了组织接口。 | A | 3 | 3 | ↑ |\n| 激励与所有权 | • \"instead of hiring... people who were focused just on resolving the ticket, we incentivized people to actually decrease number of tickets over time... support report into product\" -----Geoff Charles<br>Ramp 不按处理工单量激励支持团队，而是激励他们长期减少 tickets、提升 deflection；支持团队汇报到产品侧。<br>• 〔事实〕40 万以上用户由不到 30 人的 agent 团队支持。-----Geoff Charles | Ramp 把 support 的激励对象从“处理更多 tickets”改成“减少未来 tickets/提升 deflection”，并让 support 汇报到产品侧。这改变了招聘画像和日常行为：支持团队为产品问题消除和客户反馈闭环负责，而不是为工单吞吐负责。 | A | 3 | 3 | ↑ |\n| 人才密度 | • \"Ramp 每位销售的目标数字约为最接近竞争对手的 5 倍... 只招聘少数人，让每个人完成更多合同并获得高得多的报酬。\" -----Eric Glyman / 2026-06-23<br>• 〔事实〕Ramp 用 L0-L3 AI 熟练度分层管理人才，低熟练度者面临不适配后果；招聘设置 AI/prototype session，并用 usage tracking 找出谁在放大产出、谁需要介入。 | Ramp 的人才密度机制不是单纯 high bar，而是“少数精锐 + AI 熟练度门槛”：销售单人目标约竞品 5 倍，AI 熟练度进入分层、招聘和留任判断。证据强，但硬清退细节不如 Revolut/Coinbase 完整。 | A | 3 | 2 | ↑ |\n| 官僚层级与 span of control | • \"impact divided by headcount... fewer than five PMs and fewer than 50 engineers as we scaled to $100 million in ARR... restrict PM hiring until... product is the bottleneck\" -----Geoff Charles / 2023-05-23<br>Ramp 前两年扩到 1 亿美元 ARR 时，PM 少于 5 人、工程师少于 50 人；只有当产品成为明显瓶颈才招 PM。 | Ramp 用 impact/headcount 作为组织杠杆原则，刻意延迟 PM/协调层增长，让非 PM 承担部分 PM 工作、现有 PM 拿更大 scope。它压低头衔/协调层，用少人高杠杆保持速度。 | A | 3 | 2 | ↑ |\n| 信息透明与真相上行 | • \"every single negative review... shared back to the tech lead, the PM and the designer... NPS and CSAT... operational overhead... core contract... bugs and issues being directly assigned to the engineer that's on call\" -----Geoff Charles<br>每条产品负面评价按月回流给 tech lead、PM、designer；NPS/CSAT 和按用户数标准化工单占比成为团队 core contract；bug/issue 直接分派给 on-call 工程师。 | Ramp 把客户侧坏消息接到具名团队责任链：负面 review、NPS/CSAT、工单负担和 bugs 进入 tech lead/PM/designer/on-call engineer 的工作接口，让团队直接感受产品问题的运营成本。 | A | 3 | 2 | ↑ |\n| 一号位对组织的亲历程度 | • \"Karim or I will either meet or review the interview packets of every offer before it's approved.\" -----Eric Glyman / 2022-11-14<br>即使 Ramp 团队更大，Karim 或 Eric 也会在每个 offer 批准前亲自见候选人或审阅面试材料。 | 创始人把每个 offer 前的候选人见面/packet review 做成 hiring gate；这是把一号位注意力嵌进每个录用决策。 | A | 3 | 2 | ↑ |\n\n        - **盲区 + 下一步**：blind_dims=[]。Ramp 的 outlier 集中在速度/杠杆：outcome teams、会议清零、AI-native 产品接口、support-to-product 激励和少人高产。后续验证重点是 AI-generated code / InSpec / Ramp Inspect 是否带来维护债，以及高杠杆是否转化为隐性 burnout。\n        - **业务/战略离群(不计入组织分)**：spend management、enterprise PMF、增长速度本身不计入组织分；只有当它们对应到 outcome team、meeting reset、InSpec/Ramp Inspect、support incentive 等组织机制时计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Ramp/notebook.json 的 notebook records 评分，非实时网搜。\n"
+      },
+      {
+            "rank": 5,
+            "score": "78",
+            "sortScore": 78,
+            "conf": "RICH",
+            "dir": "↑",
+            "priority": "P0",
+            "company": "Monzo",
+            "oneliner": "Monzo 的 Alpha 不是高压汰换，而是“透明事故处理 + 风险边界授权 + 工程责任映射”的银行组织系统。它最特别的地方，是把客户信任和工程可靠性做成组织动作：重大宕机时全公司切到客服/外部沟通，主动给所有客户推送不确定性信息，并公开 post-mortem；董事会批准的 risk appetite 用定性态度、Dos/Don’ts 和量化指标给 Monzonauts 授权，在边界内快速决策；服务创建前必须映射 code owner/team，并把 owner 关系贯穿告警、review、merge policy。Monzo 更像“可信赖银行的透明/韧性组织设计”，不是 Revolut 式高收益高毒性机器。",
+            "card": "monzo",
+            "searchText": "# Monzo — Why attention?   ·   Score 78 · 置信度 RICH · 优先级 P0\n\n        **一句话定性**：Monzo 的 Alpha 不是高压汰换，而是“透明事故处理 + 风险边界授权 + 工程责任映射”的银行组织系统。它最特别的地方，是把客户信任和工程可靠性做成组织动作：重大宕机时全公司切到客服/外部沟通，主动给所有客户推送不确定性信息，并公开 post-mortem；董事会批准的 risk appetite 用定性态度、Dos/Don’ts 和量化指标给 Monzonauts 授权，在边界内快速决策；服务创建前必须映射 code owner/team，并把 owner 关系贯穿告警、review、merge policy。Monzo 更像“可信赖银行的透明/韧性组织设计”，不是 Revolut 式高收益高毒性机器。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 信息透明与真相上行 ★计分 | • \"We had to mobilise the whole company and get everyone on customer service, sending out push notifications to every customer... We didn’t know how long the outage would last... We told people exactly what went wrong and published a post-mortem detailing how we would stop it happening again.\" -----Tom Blomfield<br>2017 年重大宕机时，Monzo 调动全公司做客服，向所有客户推送通知，明确说明不知道会持续多久；恢复后公开故障原因，并发布 post-mortem。 | Monzo 把坏消息直接面向客户和公众，而不是只内部复盘：重大客户影响事件发生时，全公司临时切到客服/外部沟通，主动推送不确定性，事后公开事故原因和防复发措施。这是强 trust-building 组织机制。 | A | 3 | 3 | ↑ |\n| 决策权与授权 ★计分 | • \"Risk Appetite... sets boundaries for Monzonauts to make decisions quickly without needing extra feedback or approval... Attitude to Risk Statements, Dos and Don’ts and associated Risk Appetite Metrics... Board agrees and reviews these every year.\" -----Monzo / 2026-07-01<br>Monzo 的风险偏好通过定性风险态度、规定性的 Dos and Don’ts、量化风险指标给员工设定边界，使员工能在边界内快速决策而无需额外审批。<br>• \"ETL is everyone's responsibility, we don't have a business intelligence team\" -----Monzo data team / 2019-11-04<br>数据科学家端到端负责分析流程，没有传统 BI gatekeeper。 | Monzo 的授权不是口头 autonomy，而是把监管银行的风险边界写成可执行授权系统：员工在董事会批准的风险偏好、Dos/Don’ts 和指标内快速决策；数据团队也去掉 BI gatekeeper，让分析责任分散到数据科学家端到端承担。 | A | 2 | 3 | ↑ |\n| 康威定律 / 组织即产品 ★计分 | • \"each service needs to have a code owner. And the code owner maps to teams... services should map to teams... alerting... reviewing... merging policies\" -----Suhail Patel / Monzo<br>Monzo 的每个服务在创建前必须有 code owner，code owner 映射到团队；该映射贯穿监控、告警、review、merge policy。<br>• \"No engineer should have to be woken up because a node has died, if it has zero impact... moved all of our replicas, all of our pods in Kubernetes... effectively restarting the entire bank.\" -----Suhail Patel / 2019-05-21<br>节点失败不应叫醒工程师；Monzo 曾迁移全部 Kubernetes pods/replicas，相当于重启整家银行。 | Monzo 把服务、团队、告警、代码审核和 merge 权限映射到同一责任模型；平台韧性也被做成演练，而不是事故后补丁。它的组织-产品接口体现在“谁拥有服务、谁收到坏信号、谁能改代码”被清楚绑定。 | A | 2 | 3 | ↑ |\n| 官僚层级与 span of control | • \"tech leads are individual contributors, not managers... squads, teams... collectives... collective level leads... Managing system design, architecture and results on a technical side is their job.\" -----Sally Lait, Monzo<br>Monzo 的 tech leads 是 IC 而不是经理；collective leads 负责多个 squads 的技术架构和结果，people management 另由 EM 体系承担。 | Monzo 把技术领导和人员管理拆开，让技术专家不必通过管理头衔获得影响力；工程师移动团队时 team lead 可变、manager 保持不变，降低战略重配的人力摩擦。 | A | 2 | 2 | ↑ |\n| 组织随战略演进的能力 | • \"Each time an engineer moves teams, their team lead changes. But because these roles are separate, their manager stays the same... we’re free to move them between teams when we need to.\" -----Monzo / 2018-06-27<br>当公司重点变化时，工程师可移动到增长、营收等新团队；team lead 改变，但 manager 保持不变，因此更易按需要重配。 | Monzo 用 team lead / manager 分离来降低组织重配成本：战略重点变化时，人可以移动到最需要的团队，但长期管理关系不断裂。这是中等强度、低毒性的组织演进机制。 | A | 2 | 2 | ↑ |\n| 红旗 | • \"As CEO, I never switched off... I stopped sleeping... reconfigure your role so you’re not doing three jobs at once.\" -----Tom Blomfield<br>创始人 CEO 日程从早 8 点排到晚 8 点，无法停止思考问题、失眠；董事长曾讨论如何重新配置角色，避免一个人做三份工作。 | Monzo 早期 CEO role design 有承载力红旗：组织透明和速度背后，创始人 CEO 承担过多上下文与压力，最终在融资/疫情压力下交接。这是风险提示，不进主分。 | A/RF | 2 | 3 | ↓ |\n\n        - **盲区 + 下一步**：blind_dims=[]。Monzo 的 outlier 更偏信任、透明和工程韧性，不是强清退/强控制系统。后续验证重点是这些机制在规模化和监管压力下是否仍保持速度，而不是退化成普通银行流程。\n        - **业务/战略离群(不计入组织分)**：Monzo 的银行牌照、产品扩张和增长本身不计入组织分；只有全公司事故沟通、risk appetite 授权、service-owner 映射、team-lead/manager 分离等改变组织行为的机制计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Monzo/notebook.json 的 notebook records 评分，非实时网搜。\n"
+      },
+      {
+            "rank": 6,
+            "score": "59",
+            "sortScore": 59,
+            "conf": "RICH",
+            "dir": "↑",
+            "priority": "P1",
+            "company": "Mercury",
+            "oneliner": "Mercury 的 Alpha 是一套“金融正确性工程 + 小队自治 + CEO 去瓶颈”的组织系统。它不是 Revolut/Coinbase 那种硬清退机器，而是更工程化、克制的偏离：Haskell/类型系统和 Craft round 把工程筛子推向“关心正确性的人”；约 8 人 autonomous product teams 拥有 invoicing/wires 等产品域，可以跑 roadmap、修 bugs；当 Synapse/partner-bank 模型不再适配规模和风险时，Mercury 提前迁出并把更多底层能力内化。它值得看，但证据强度更多来自创始人/公司叙事和工程文化材料，硬后果不如 P0 公司密集。",
+            "card": "mercury",
+            "searchText": "# Mercury — Why attention?   ·   Score 59 · 置信度 RICH · 优先级 P1\n\n        **一句话定性**：Mercury 的 Alpha 是一套“金融正确性工程 + 小队自治 + CEO 去瓶颈”的组织系统。它不是 Revolut/Coinbase 那种硬清退机器，而是更工程化、克制的偏离：Haskell/类型系统和 Craft round 把工程筛子推向“关心正确性的人”；约 8 人 autonomous product teams 拥有 invoicing/wires 等产品域，可以跑 roadmap、修 bugs；当 Synapse/partner-bank 模型不再适配规模和风险时，Mercury 提前迁出并把更多底层能力内化。它值得看，但证据强度更多来自创始人/公司叙事和工程文化材料，硬后果不如 P0 公司密集。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 决策权与授权 ★计分 | • \"autonomous product teams... something like eight people, 1 PM, one designer, six engineers... own invoicing or... wires... run their own roadmap... fix their own bugs.\" -----Immad Akhund / Mercury<br>Mercury 把约 300 人产品/工程/设计组织拆成约 8 人 autonomous product teams，每队拥有一个产品域，可跑自己的 roadmap、修自己的 bugs。<br>• 员工侧称工程/设计对产品方向有真实影响，不需要穿过多层 approval 才能 ship features。-----employee-side material | Mercury 的小队自治不是泛泛敏捷：团队围绕具体金融产品域拥有 roadmap 和 bug ownership，在统一设计/工程标准下减少跨团队协调。偏离度中等，但机制清楚。 | A | 2 | 3 | ↑ |\n| 组织随战略演进的能力 ★计分 | • \"In 2022, we stopped onboarding customers to [Synapse]. And then 2023 we moved off entirely.\" -----Immad Akhund / 2026-04-27<br>Mercury 在 Synapse 2024 年失败前，2022 年停止新增客户，2023 年完全迁出。<br>• \"as you scale, that model starts breaking... the foundation of the customer experience ends up sitting externally versus internally... we brought more and more of that in house\" -----Jason Zhang<br>随着规模扩大，partner bank model 让客户体验基础落在外部，Mercury 逐步把能力带回内部。 | Mercury 能在外部 BaaS/partner-bank 风险暴露前主动改变底层运营边界，把客户体验、ledger/资金控制和合规能力从高风险外部中间层迁回内部。这是金融基础设施公司很实在的组织演进能力。 | A | 2 | 3 | ↑ |\n| 人才密度 ★计分 | • \"The Haskell codebase is genuinely impressive... Mercury can't just hire any experienced backend engineer... need people who either already know Haskell or are motivated enough to learn it... natural filter... care about correctness\" -----Jobs by Culture citing employee review / 2026-04-24<br>Mercury 的 Haskell 代码库和类型系统让银行功能发版更有信心，同时缩小人才池，筛出关心正确性、愿意学习的人。<br>• 〔事实〕senior engineering loop 设置 Craft/type-system round，用代码 review 或 API/数据模型 sketch 筛选能用类型、不变量、错误处理表达正确性的工程师。 | Mercury 用 Haskell/类型系统和 Craft round 做工程人才筛子，筛出的不是普通后端能力，而是金融系统里重视正确性、类型建模和可解释设计的人。偏离度中等偏高，但 C 不满：更多是工程文化和招聘流程信号，缺少员工硬后果/长期汰换数据。 | A | 2 | 2 | ↑ |\n| 官僚层级与 span of control | • 〔事实〕Immad 在观察 Jensen Huang 以 60 个直接下属管理 NVIDIA 后，取消所有 one-on-ones。-----New Economies episode page / 2026-06-10<br>• \"when there's enough layers of management... you do have to have some sort of way to have a top level goal and percolate that through.\" -----Immad Akhund / 2025-08-06 | CEO 试图从传统一对一管理切换到更宽 span、更少同步的工作方式，以降低 CEO bottleneck。机制有趣但证据较薄，作为补充 Alpha 保留。 | A | 2 | 2 | ? |\n| 信息透明与真相上行 | • \"we write... six-ish pages... two to three subjects... discussion topics... appendix... finances projections, hiring plan... no status updates.\" -----Immad Akhund<br>董事会材料从 slides/status update 改成会前 6 页 memo，会议只讨论真正重要的两三个主题。 | Mercury 的董事会信息流把 status update 后置到 appendix，把会议时间留给两三个核心问题。这是提高真相密度的具体机制，但更多停留在董事会层，不支撑高分。 | A | 2 | 2 | ↑ |\n\n        - **盲区 + 下一步**：blind_dims=[]。Mercury 的 outlier 主要是工程正确性、小队自治和底层金融能力内化；它更像 P1 工程化组织 Alpha，而不是高压/硬后果型 P0。\n        - **业务/战略离群(不计入组织分)**：Mercury 的创业公司银行定位、BaaS 迁移、个人银行等业务选择不单独计分；只有当它们对应到团队边界、工程筛子、自治机制或能力内化时计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Mercury/notebook.json 的 notebook records 评分，非实时网搜。\n"
+      },
+      {
+            "rank": 7,
+            "score": "59",
+            "sortScore": 59,
+            "conf": "RICH",
+            "dir": "↑",
+            "priority": "P1",
+            "company": "SoFi",
+            "oneliner": "SoFi 的 Alpha 更像“银行化 fintech 的风险资本治理 + 平台能力内化”，不是强 outlier 组织机器。它最有辨识度的组织设计，是把 CEO/高管激励同时绑到 TBV/TSR 上行和银行资本红线下行：只要 total risk-weighted capital ratio 低于 10.5%，CEO PSU 100% forfeiture；年度 bonus 又受 Risk Management Effectiveness Assessment 调节。另一个有意义的偏离，是 SoFi 从 fintech/partner 模式演进为银行控股公司，把 SoFi Bank、Galileo、Technisys、FTP 和内部风险/资金系统纳入同一治理/资金/平台边界。但这些更接近受监管金融科技规模化后的硬治理，而不是 Revolut/Coinbase/Ramp 那种明显改写员工日常行为的 outlier operating system。",
+            "card": "sofi",
+            "searchText": "# SoFi — Why attention?   ·   Score 59 · 置信度 RICH · 优先级 P1\n\n        **一句话定性**：SoFi 的 Alpha 更像“银行化 fintech 的风险资本治理 + 平台能力内化”，不是强 outlier 组织机器。它最有辨识度的组织设计，是把 CEO/高管激励同时绑到 TBV/TSR 上行和银行资本红线下行：只要 total risk-weighted capital ratio 低于 10.5%，CEO PSU 100% forfeiture；年度 bonus 又受 Risk Management Effectiveness Assessment 调节。另一个有意义的偏离，是 SoFi 从 fintech/partner 模式演进为银行控股公司，把 SoFi Bank、Galileo、Technisys、FTP 和内部风险/资金系统纳入同一治理/资金/平台边界。但这些更接近受监管金融科技规模化后的硬治理，而不是 Revolut/Coinbase/Ramp 那种明显改写员工日常行为的 outlier operating system。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 激励与所有权 ★计分 | • \"Under the PSU award, our CEO may earn between 0% and 150% of the target number of PSUs... Absolute Growth in Tangible Book Value... TSR modifier...\"；但如果 total risk-weighted capital ratio 在考核期内任何时候低于 10.5%，CEO PSU 立即 100% forfeited。-----SoFi Technologies, Inc.; Anthony Noto / 2025-04-15<br>CEO PSU 在 2024-2026 三年考核期内按有形账面价值增长和相对 TSR 结算，最高可到目标数 187.5%；但总风险加权资本比率低于 10.5% 时全部 forfeiture。<br>• \"Risk Management Effectiveness Assessment\" 会成为整体薪酬决策因素，包括影响最终年度 bonus payout。-----SoFi Technologies, Inc. / 2025-04-15<br>• 〔事实〕2024 年 clawback policy 扩展到所有 SVP/VP，并可在 misconduct related matters 下追回 incentive compensation 和 time-based equity。-----SoFi Technologies, Inc. / 2025-04-15 | SoFi 把银行资本安全、风险管理和高管回报接到同一条激励链：CEO 的长期上行来自 TBV/TSR，但银行资本红线是一票否决；年度 bonus 也被风险管理有效性调节。它不是普通“业绩奖金”，而是在上市 fintech/银行控股公司框架里，把增长、股东回报和风险控制一起写进高管激励。 | A | 2 | 3 | ↑ |\n| 组织随战略演进的能力 ★计分 | • 〔事实〕2022 年 SoFi 完成 Bank Merger，收购 Golden Pacific Bancorp 及其全国性银行子公司；交易后 SoFi 成为银行控股公司，Golden Pacific 作为 SoFi Bank 运营。-----SoFi Technologies, Inc. / 2024-04-10<br>• 〔事实〕SoFi Bank 承接 Checking/Savings、所有新贷款申请、Credit Card 和大多数贷款产品。-----SoFi Technologies, Inc. / 2024-04-10<br>• \"75%-85% of talent\" 被 CEO 描述为投在未上线或非成熟业务上；工程、产品、设计、数据科学人数被 CEO 像现金/资产负债一样每日跟踪。-----Anthony Noto / 2023-07-20 | SoFi 的组织边界从 fintech/外部合作模式演进为银行控股公司内部发起与存款资金支持：银行牌照、SoFi Bank、Galileo/Technisys 技术平台、FTP 资金归因和风险监控进入同一结构。它的偏离不是某个产品，而是用 M&A/牌照/资金框架重画组织和产品运行边界。 | A | 2 | 3 | ↑ |\n| 信息透明与真相上行 ★计分 | • \"We knew where our deposits were every second of the day. Similarly, we knew where our liabilities were every second of the day.\" -----Anthony Noto / 2023-07-20<br>Noto 说 SoFi 每一秒都知道存款和负债在哪里，而监管者接触到的多数机构做不到。<br>• 〔事实〕credit policy 有 early warning dashboard，覆盖外部、内部、宏观、微观和 loan-performance signals；信号变红时会收缩信贷、降低 underwriting tiers。-----Anthony Noto / 2025-04-30<br>• 〔事实〕客户社区、beta group、ambassador group 和 member advisory board 会向公司和 executive team 反馈表现；每日 NPS tracker 发给 leadership team。-----Jean-Michel Hoffman / SoFi material | SoFi 把资金、负债、信用和客户体验信号做成高管可见的日常仪表盘：存款/负债实时可知，信用风险进入 early-warning dashboard，客户反馈进入 leadership cadence。它能提高真相上行，但更像成熟金融机构的控制系统，偏离度中等。 | A | 2 | 2 | ↑ |\n| 战略—结构匹配 | • \"Following the acquisition of Galileo... shared operational services... legal and compliance, human resources, IT, corporate development and strategy\" -----SoFi Technologies, Inc. / 2022-03-15<br>收购 Galileo 后，SoFi 继续向 Galileo 提供法律合规、人力、IT、公司发展与战略等共享服务。<br>• 〔事实〕SoFi 高管结构按 Spend/Invest/Protect/Save、Borrow 等 group business units，并配 CFO、CRO、CTO、GC。-----SoFi Technologies, Inc. / 2025-04-15<br>• 〔事实〕SoFi 实施 FTP 框架，把净利息收入按资金使用/提供归因到业务分部，同时把利率风险集中到 Corporate/Other 监控管理。-----SoFi Technologies, Inc. / 2024-04-10 | SoFi 用“独立平台业务 + 母公司共享中后台 + 资金转移定价”的结构来管理多产品金融平台。Galileo 保留平台业务身份，同时接入 SoFi 共享服务；FTP 把资金收益/风险归因到业务分部。机制清楚，但属于规模化金融集团的正常硬治理，非 Top-3 强 outlier。 | A | 2 | 2 | ↑ |\n| 决策权与授权 | • \"we've tested hundreds of ads on Zappi, and we've had almost a hundred that didn't make the cut... tens of millions of dollars\" -----Jean-Michel Hoffman<br>SoFi 在 Zappi 上测试数百个广告，近 100 个没有通过，影响数千万美元媒体投放。<br>• 〔事实〕SoFi 实施 DACI decision-making framework，并做培训刷新。-----SoFi / 2020-12-14 | SoFi 在营销投放中把外部反馈测试变成放行门，避免少数 creative decision makers 拍脑袋决定数千万美元广告；DACI 提供决策角色框架。它是有效管理机制，但在同类公司中不够反常。 | A | 1 | 3 | ↑ |\n| 红旗 | • 〔事实〕2017 年 SoFi 快速增长期的工作文化被描述为 frat-house-like；创始人 Mike Cagney 被指不当谈话、性骚扰诉讼，并有员工称因反对有问题文化而被污名化。-----Fortune / 2024-05-16<br>• Blind 员工侧称部分团队 top-down、无 pushback、状态检查和微管理严重。-----Blind anonymous commenter / 2026-07-01 | SoFi 有历史和员工侧红旗：早期文化问题惩罚反向真相上行，近年员工侧也有 top-down/微管理反馈。这些是风险提示，但材料分散，且不构成当前稳定运行的 outlier 组织设计。 | A/RF | 2 | 2 | ↓ |\n\n        - **盲区 + 下一步**：blind_dims=[]。SoFi 有组织设计材料，但 outlier 主要集中在受监管金融集团的风险资本治理和银行化结构演进；不是强 P0 operating system。若要上调分数，需要看到这些风险/资本/平台机制如何持续改变一线团队权责、预算、清退或产品发布边界。\n        - **业务/战略离群(不计入组织分)**：SoFi Bank、Galileo、Technisys、Konecta、会员增长和金融产品组合本身不计入组织分；只有当它们对应到激励、风险仪表盘、资金归因、共享服务或组织边界时计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/SoFi/notebook.json 的 notebook records 评分，非实时网搜；records=989，date_fill=76.85%，blind_dims=[]，chunk_status={'RICH': 16, 'THIN': 2}。\n"
+      },
+      {
+            "rank": 8,
+            "score": "52",
+            "sortScore": 52,
+            "conf": "RICH",
+            "dir": "↑",
+            "priority": "P1",
+            "company": "PayPal",
+            "oneliner": "PayPal 不是当前强 outlier 组织机器，更像一家老牌支付公司在重构中的“legacy-to-customer-back”组织。它真正值得看的机制有三类：一是 Dan Schulman 时代把员工财务健康做成 NDI owner metric，从 4%-6% 净可支配收入基线推到 20% 目标，并配套降医疗成本、涨薪、全员 RSU；二是 treasury 把现金定位、账户、FX、wire processing 从多表格/多系统/人工验证迁到 TMS 和 AI 自动化；三是新管理层把 PayPal 从历史产品/职能孤岛重组为 consumer、SMB、enterprise/large merchants 三类 customer segment。它有组织设计，但更多是大公司修复和转型中的准 Alpha；早期 PayPal 的 one-thing owner、反会议、个人创新神话不应计入今天 PayPal 的主分。",
+            "card": "paypal",
+            "searchText": "# PayPal — Why attention?   ·   Score 52 · 置信度 RICH · 优先级 P1\n\n        **一句话定性**：PayPal 不是当前强 outlier 组织机器，更像一家老牌支付公司在重构中的“legacy-to-customer-back”组织。它真正值得看的机制有三类：一是 Dan Schulman 时代把员工财务健康做成 NDI owner metric，从 4%-6% 净可支配收入基线推到 20% 目标，并配套降医疗成本、涨薪、全员 RSU；二是 treasury 把现金定位、账户、FX、wire processing 从多表格/多系统/人工验证迁到 TMS 和 AI 自动化；三是新管理层把 PayPal 从历史产品/职能孤岛重组为 consumer、SMB、enterprise/large merchants 三类 customer segment。它有组织设计，但更多是大公司修复和转型中的准 Alpha；早期 PayPal 的 one-thing owner、反会议、个人创新神话不应计入今天 PayPal 的主分。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 激励与所有权 ★计分 | • \"the net disposable income of a large part of PayPal's population was between four and six... the minimum somebody needs to feel financially healthy and secure is twenty NDI...\" -----Dan Schulman<br>PayPal 发现大量员工净可支配收入在 4%-6% 之间，而财务健康和安全所需最低 NDI 是 20%。公司因此设计项目，把每位员工的 NDI 提高到最低目标。<br>• 〔事实〕2019 年 10 月，PayPal 推出一组综合变化：涨工资、降低医疗成本、授予股权、提供财务规划工具。-----Dan Schulman / LEADERS Magazine / 2022-04<br>• \"We gave every single person inside PayPal restricted shares of the company...\" -----Dan Schulman<br>PayPal 给公司内每个人授予限制性股票，让员工分享公司成功，并配套金融教育/金融素养项目。 | PayPal 把员工财务健康从福利口号转成可度量 owner metric：不是统一发福利，而是用 NDI 诊断员工是否有真实财务安全感，再通过医疗成本、社区工资、全员股权和金融教育组合干预。这个机制有成本、有指标，也会改变员工与公司成功之间的经济关系。 | A | 2 | 3 | ↑ |\n| 组织随战略演进的能力 ★计分 | • \"Cash positioning was standardised across regions on TMS, retiring 90 spreadsheets and saving approximately 1,700 hours annually... cash positioning accuracy above 99%... global automated cash visibility... close to 100%...\" -----PayPal treasury team / Deutsche Bank flow / 2026-05-11<br>PayPal treasury 跨地区将现金头寸标准化到 TMS，退役 90 个电子表格、每年节省约 1,700 小时；支付数据进入预测后现金头寸准确率超过 99%，全球自动现金可见性接近 100%。<br>• 〔事实〕PayPal Treasury 成员被邀请识别最繁琐流程，并说明 AI 在哪里能创造最大价值；许多 AI initiatives 并非自上而下，而是来自团队内部。-----Deutsche Bank flow / 2026-05-11 | PayPal 的 treasury 转型是局部但真实的组织边界重构：一线流程 owner 把痛点上报为 AI/自动化项目，现金、账户、FX、wire processing 从多表格/多系统/人工验证迁到 TMS 和 straight-through processing。它能说明 PayPal 在关键金融后台里有“流程 owner → 自动化系统”的当前运行机制。 | A | 2 | 2 | ↑ |\n| 战略—结构匹配 ★计分 | • \"Organizing customer back was one of the first moves that we made... we reorganized so that we actually were serving consumers, small businesses and then enterprise customers / large merchants... need a general manager and a product leader...\" -----Alex Chriss / 2025-07-23<br>Alex Chriss 称 customer-back 组织是其加入后最早动作之一：PayPal 重组为服务消费者、小企业、企业/大型商户三类客户，每类都有 GM 和 product leader。<br>• 〔事实〕PayPal 过去 GTM 基于孤岛，不同团队向同一商户分别销售各自产品；现在 GTM 聚焦完整 value proposition，让商户有单一联系点。-----Alex Chriss interview summary / 2025-04-28 | PayPal 正在把历史产品/职能孤岛重画成 customer segment 边界：consumer、SMB、enterprise/large merchants 各有 GM 和 product leader，GTM 也从多产品分头销售改成面向商户的单一价值主张。这是合理的 customer-back 重组，但仍偏转型中，尚未显示足够硬的员工行为后果。 | Δ/A | 2 | 2 | ↑ |\n| 决策权与授权 | • \"we've tested hundreds of ads on Zappi, and we've had almost a hundred that didn't make the cut... tens of millions of dollars\" -----Jean-Michel Hoffman<br>PayPal 在 Zappi 上测试数百个广告，近 100 个没有通过，影响数千万美元媒体投放。<br>• 〔事实〕PayPal 实施 DACI decision-making framework，并用培训刷新帮助员工做原则驱动的决策。-----SoFi Sitcom? / PayPal source note in notebook | PayPal 在营销投放中把外部反馈测试变成放行门，避免少数 creative decision makers 凭直觉决定数千万美元广告。DACI 也提供角色框架。机制有效，但在大公司里不够反常，作为补充而非主分。 | A | 1 | 3 | ↑ |\n| 康威定律 / 组织即产品 | • 〔事实〕PayPal 与 Venmo P2P 应用在十多年后首次互操作；此前因 Braintree 遗留技术长期分离。-----Alex Chriss / American Banker context / 2025-12-02<br>• 〔事实〕员工侧聚合把 slow product rollouts、duplicative teams、unclear ownership 与 disparate tech stack 连接起来；当前 GTM/产品重组试图修复这些历史接缝。-----Glassdoor summary / Value Philosopher / Alex Chriss interview | PayPal 的产品/组织接口问题本身是负向信号：历史产品孤岛和技术债导致 PayPal/Venmo、GTM 团队和平台能力长期分裂。当前互操作和 customer-back 重组是在修复接缝，而不是已经形成强 Alpha。 | Δ/RF | 1 | 2 | ↓ |\n| 红旗 | • \"the pace of change and execution was not in line with the Board's expectations\" -----PayPal Board of Directors / 2026-02-03<br>董事会称过去两年 turnaround 虽有进展，但变化和执行速度不符合预期，因此任命 Lores 进入下一阶段。<br>• \"we have launched a lot of great innovation to market but we haven't had enough effort... to make it real... moved to launch the next version before really maximizing the value...\" -----Enrique Lores / 2026-05-27<br>Lores 称 PayPal 推出很多创新，但没有投入足够资源在各国真正落地，常在最大化现有产品价值前转向下一版本。 | 董事会用 CEO 更替处理执行速度不达预期，说明 PayPal 的主要问题是大公司转型执行力而非缺少想法。Lores 的表述也指向同一红旗：发布很多，但落地、国家投入、团队专注不足。 | RF/Δ | 2 | 3 | ↓ |\n\n        - **盲区 + 下一步**：blind_dims=[]。PayPal 的当前组织偏离主要是大公司修复型：员工财务健康机制、treasury 自动化、customer-back 重组和执行速度治理。若要上调分数，需要看到 customer segment / GTM / platform 重组已经改变一线团队权责、预算、发货速度或产品采用结果，而不只是新 CEO 转向叙事。\n        - **业务/战略离群(不计入组织分)**：PayPal/Venmo 互操作、Fastlane、AI 工具、产品发布、商户增长本身不计入组织分；只有当它们对应到组织边界、决策门、流程 owner、自动化系统或员工激励时才计分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/PayPal/notebook.json 的 notebook records 评分，非实时网搜。\n"
+      },
+      {
+            "rank": 9,
+            "score": "78",
+            "sortScore": 78,
+            "conf": "RICH",
+            "dir": "↑",
+            "priority": "P0",
+            "company": "Robinhood",
+            "oneliner": "Robinhood 的组织操作系统 = AI compute 当作 headcount + impact Top150 人才社区 + GM/PnL ownership。它不是普通 fintech 的“AI-first / customer-first / move fast”叙事，而是把组织资源配置、人力扩张和业务责任都改写成更硬的运行规则：团队申请新增 headcount 前要证明 AI agent 已经充分接入 workflow；全公司各层级按 impact 选出 Top150，既拿战略/愿景反馈权，也连接 discretionary compensation；2022 年大重组后，业务 GM 对各业务线承担 PnL 和 broad responsibility。代价是组织持续处在高压、低 slack、频繁重排和绩效淘汰环境里，员工侧能看到 whiplash、job security 波动和裁员冲击。",
+            "card": "robinhood",
+            "searchText": "# Robinhood — Why attention?   ·   Score 78 · 置信度 RICH · 优先级 P0\n\n        **一句话定性**：Robinhood 的组织操作系统 = AI compute 当作 headcount + impact Top150 人才社区 + GM/PnL ownership。它不是普通 fintech 的“AI-first / customer-first / move fast”叙事，而是把组织资源配置、人力扩张和业务责任都改写成更硬的运行规则：团队申请新增 headcount 前要证明 AI agent 已经充分接入 workflow；全公司各层级按 impact 选出 Top150，既拿战略/愿景反馈权，也连接 discretionary compensation；2022 年大重组后，业务 GM 对各业务线承担 PnL 和 broad responsibility。代价是组织持续处在高压、低 slack、频繁重排和绩效淘汰环境里，员工侧能看到 whiplash、job security 波动和裁员冲击。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 人才密度 ★计分 | • \"We want to make it. I mean, sometimes it's pretty obvious that for whatever reason we made a hiring mistake, usually that someone's not a fit. And at that point we want to make it as easy as possible. So yeah, if it's t… -----Baiju Bhatt / 2026-03-03<br>如果明显是招聘失误或不匹配，三周后继续下去也没有意义；一旦知道不合适，等六个月太久。若看到某人有潜力且在某方面异常优秀，可以给时间，但 Robinhood 试图让移除低绩效者在流程上非常容易。<br>• \"Vlad Tenev: Basically, if you're in the top 150 people in the company by impact across all levels, it's a real community. So it started out as compensation. John Collison: Is this model modeled after the Apple Top 100? … -----Vlad Tenev / 2025-08-13<br>如果某人是全公司各层级按 impact 评出的前 150 人，就进入一个真实社区；它最初以薪酬为中心，把 discretionary budget 分给最好的人，后来变成战略/愿景反馈社区，并在各城市组织活动和晚餐。<br>• \"**Vlad Tenev:** Roughly every year we try to look at the document, revisit it, we get our best people around the company. I try to get together people at all levels who are just, you know, the highest performers. That’s… -----Vlad Tenev / 2026-02-03<br>Vlad Tenev 说，大约每年都会回看并重审这个愿景文件，把公司各处最优秀的人聚在一起。他会尽量找来各层级最高绩效者，大约 150 人，其中包括 IC 和更初级的人；通常一年一到两次把他们聚到一起。<br>• \"### Thread 2: Robinhood layoffs - 2026-06-18T03:00:00.000Z · https://www.teamblind.com/post/robinhood-layoffs-ywln4npc I am negotiating my offer rn and wonderi… -----Blind anonymous thread author and commenters / 2026-06-18<br>Blind 讨论称 Robinhood 刚裁员但仍在大量招聘；评论称裁员很大程度上基于绩效，且仍在积极招聘；另有人称看到 LinkedIn 上有人 offer 被撤，原本一周后入职。 | Robinhood 的人才密度不是普通 high bar 叙事：招聘错误可在三周级别处理，不把六个月 PIP 当默认；Top150 impact community 把最高绩效者从层级中抽出，连接薪酬、战略反馈和 CEO 视野；员工侧还能看到绩效裁员与持续招聘并行。这个机制有短周期、有硬后果，也有明显员工侧成本。 | A | 3 | 3 | ↑↓ |\n| 战略—结构匹配 ★计分 | • \"For software engineering, Robinhood tracks the percentage of code commits generated by AI alongside total monthly commits per engineer. The second metric is critical; it ensures that AI is not just doing a larger share … -----FS Blog / 2026-03-03<br>在软件工程上，Robinhood 同时跟踪 AI 生成代码提交占比和每位工程师每月总提交数。Vlad 透露，Robinhood 现在把 AI compute 当作 headcount；规划对话里，团队被问到下一年需要多少 compute，而不只是需要多少人。每个团队在申请新增 headcount 前，必须证明自己已经…<br>• \"_“You want to make those partners feel as owners in the product. As product owner, the engineering manager feels, or, the designer feels, right? The legal partner or the compliance person should feel as motivated to del… -----Abhishek Fatehpuria / 2026-04-23<br>“你希望这些伙伴像产品 owner、工程经理或设计师一样，对产品有 owner 感。法务或合规伙伴应该和其他人一样有动力，把出色的产品推向市场。”Robinhood 在 2022 年转向 GM 组织，一部分是为了产品速度；当合规、法务、运营、产品和工程都汇入同一个 GM，它们在结构上就在同一支队伍里。<br>• \"But yeah, the flip side is if everything’s functional and you’re rolling out multiple businesses, then nobody owns the PNL (profit-and-loss) of those businesse… -----Vlad Tenev, co-founder and CEO of Robinhood / 2025-04-14<br>如果所有东西都是职能制，而你在推出多个业务，那么没人拥有这些业务的 PnL。除了最顶层的人之外，没有一个人为自己所做业务的结果而寝食难安；对 Robinhood 这种多产品线、多实体业务来说，这是一个缺陷。 | Robinhood 把结构设计直接连到资源配置：AI 不是普通工具试用，而是进入 planning 语言，compute 与 headcount 被放在同一张资源表里；团队要先证明 AI agent 已被充分使用，才有资格申请更多人。另一条结构偏离是 GM/PnL ownership：从纯职能制转向业务 GM 承担多业务线结果，让产品、工程、合规、法务、运营围绕同一业务结果汇合。 | A | 3 | 2 | ↑ |\n| 决策权与授权 ★计分 | • \"On August 2, 2022, we announced the August 2022 Restructuring, which involved approximately 780 employees, representing approximately 23% of our full-time employees at the time, the planned closure 135 of two offices, a… -----Robinhood Markets, Inc. / 2023-12-31<br>2022 年 8 月 2 日，我们宣布 2022 年 8 月重组，涉及约 780 名员工，约占当时全职员工的 23%，并计划关闭两个办公室等事项。这些行动是公司重组为 GM 结构的一部分，在该结构下，GM 已经承担起对各个业务的广泛责任。<br>• \"我会努力明确我们的目标和最终目标，并给予那些精通细节、能够专注于自己工作的人很大的自主权，让他们决定如何实现目标。这样，他们就会成为项目的主人，承担责任。所以我不会对所有事情都指手画脚。对于一些事情，我会有一些意见——比如我熟悉的产品、活动的举办方式、发布会的方式——但我明确表示，我的总经理、产品负责人以及那些与我关系密切的人可以否决我的意见，如果他们觉得我的意见不对，我鼓励他们大声斥责我，说我是个混蛋。\" -----Vlad Tenev<br>• \"Well now, you know, the non engineers can do them themselves and it's just like a big 0 to 1 unlock. -----Vlad Tenev / 2026-03-18<br>而现在，非工程师可以自己做这些事情，这就像一个巨大的从 0 到 1 的解锁。 | Robinhood 的授权不是单纯“empower teams”：2022 年约 23% 员工受影响的大重组把业务责任放到 GM 结构里，GM 对 individual businesses 承担 broad responsibility；CEO 同时公开允许 GM / 产品负责人否决自己意见。AI 内部工具又把一部分自动化执行权从工程排期转给非工程团队，改变“谁能发货/谁需要等工程”的边界。 | A | 2 | 3 | ↑ |\n| 信息透明与真相上行 | • \"Yeah, so weekly leadership meeting is a big meeting. There's, there's a lot of people involved and I like having large groups of people involved because then e… -----Baiju Bhatt / 2026-03-03<br>每周领导会议是一个大会议，很多人参与，因为每个人都能听到其他人在想什么；一对一基本按需，只在关键事项或重要决策时进行。会议会传递重要信息并审视目标，用绿/黄/红表示进展；绿色不谈，红色目标需要审视。<br>• \"I think that sometimes it's. It's really nice to lighten up some extremely serious things so that people actually enjoy talking openly about, you know, goals t… -----Baiju Bhatt / 2026-03-03<br>有时把极其严肃的事情稍微轻松化，会让人们真正愿意公开谈论进展不顺的目标。假设领导团队每个人都很强，所以事情不顺通常有原因，不只是努力不够；多人的视角能帮助快速改进和扭转。 | Robinhood 的领导节奏有一个中等强度的真相上行机制：大范围 weekly leadership meeting 让目标状态在更多人面前暴露，green 不耗时，red goals 被拿出来诊断，且失败目标不直接归因于个人努力不足。它比普通状态汇报更具体，但主要来自创始人侧表述，缺少员工侧证明坏消息真的能无损改变资源和责任。 | A | 2 | 2 | ↑ |\n| 官僚层级与 span of control | • \"We believe in doing more with less. Our hiring and promotions aren't about who's led the biggest team, but who's led lean teams to big results. We care about execution, not title. Prioritizing delivery over hierarchy he… -----Robinhood<br>我们相信以更少资源做更多事。我们的招聘和晋升不看谁带过最大的团队，而看谁带领精干团队取得大结果。我们重视执行，而不是头衔。把交付置于层级之上，帮助我们即使在当前规模下也像创业公司一样运作。<br>• \"**Brian Halligan:** How painful is it coming up with that list, and how pissed are people when they’re like a director or VP and don’t get invited to that and the individual contributor that works for them does? **Vlad … -----Vlad Tenev / 2026-02-03<br>Brian Halligan 问：列这个名单有多痛苦？当一个 director 或 VP 没被邀请、但向他汇报的 IC 被邀请时，人们会有多生气？Vlad Tenev 答：你必须尽可能按 meritocracy 来做。通常我发现人们知道谁是最好的人。你问别人，他们会说，是的，那个人就应该在那个会里。 | 反头衔通胀是 Robinhood 的补充信号：晋升和招聘语言明确反对“带大团队=更高地位”，Top150 impact community 可以让 IC 越过管理层进入核心战略/愿景反馈圈。它有偏离意义，但还没有充分证据显示 Robinhood 长期维持极宽 span 或低层级结构，因此不作为主分。 | A | 2 | 2 | ↑ |\n| 组织随战略演进的能力 | • \"In 2022, Robinhood declared itself a remote-first company and said it would be \"staying primarily remote.\" Tenev said he regretted his 2022 decision to be remote \"pretty much immediately,\" and a year later, the company … -----Business Insider summarizing Vlad Tenev and Robinhood policy / 2025-08-14<br>2022 年 Robinhood 宣布自己是 remote-first 公司，并称会主要保持远程。Tenev 表示他几乎立刻后悔了这个决定；一年后，公司告知员工预期平均每周至少四天回办公室。<br>• \"we announced two restructurings in April 2022 (the “April 2022 Restructuring”) and August of 2022 (the “August 2022 Restructuring”) that impacted approximately… -----Robinhood Markets, Inc. / 2023-12-31<br>公司在 2022 年 4 月和 8 月宣布两次重组，影响约 1,100 名员工并缩减招聘计划；公司持续评估人员配置是否成本高效，并在发现生产率提升和精简运营模式下有更高效率机会时，不时削减某些部门人员，同时继续服务和创新。<br>• \"we try never to have slack. I think for that particular case, when new information comes in you have to reprioritize in real time... we had a lot of the regula… -----Vlad Tenev / 2026-02-03<br>我们尽量不保留闲置冗余。新信息出现时必须实时重排优先级；因为已有监管基础设施，他们把原本先发期货 outrights 的顺序翻转，先把预测市场推给客户，延后 outrights。 | Robinhood 的组织演进能力有强烈双面性：它能快速推翻 remote-first、持续压缩 staffing、实时重排产品优先级，也能把 2022 大裁员后的 leaner operating model 常态化。但这些更像高压演进和补债混合体，而不是低戏剧性、稳定可复述的组织升级节奏。 | Δ/RF | 2 | 2 | ↑↓ |\n| 红旗 | • \"- 2026-02-12，Recruiter，Menlo Park，reviewId 102807845： \"Teams are frequently asked to “move fast” without the infrastructure or resourcing required to do so sus… -----Glassdoor Recruiter, Menlo Park, reviewId 102807845 / 2026-02-12<br>招聘员工称，团队经常被要求在没有足够基础设施或资源的情况下快速推进；“战略”项目几乎隔天启动，却在充分跟进前改变方向，造成冲击和士气问题。<br>• \"- 信号：员工关系里有“高福利 + 高挤压 + 高流动容忍”的组合。为什么反常：上市、受监管公司通常需要建立长期稳定雇主关系；评论却同时出现好福利、好人、强产品，以及 secret layoffs、silent-firings、turnover as strategy、no job security。它可能说明组织在…\" -----Glassdoor employee reviews summarized by channel pipeline<br>• \"Took us all by surprise. People let go lost their slack access but their slack account aren't deactivated yet. Don't know who's let go. -----Blind anonymous commenters / 2026-06-16<br>这让我们所有人都措手不及。被裁的人失去了 Slack 访问权限，但他们的 Slack 账户还没有被停用。我们不知道谁被裁了。 | Robinhood 的高速度机制有可见副作用：低 slack、频繁重排、战略项目反复启动/转向、裁员与招聘并行、员工对 job security 的不确定感。这些不是主分 Alpha，但它们说明 Robinhood 的偏离不是“干净的高绩效”，而是带有高压和控制债的组织系统。 | RF | 2 | 2 | ↓ |\n\n        - **盲区 + 下一步**：blind_dims=[]。Robinhood 已有多条可复述的 outlier 机制；若要继续验证，优先看 AI compute-as-headcount 是否真的改变各业务线预算/HC 审批，以及 Top150 impact community 是否持续影响薪酬、战略反馈和晋升，而不是只是一年一两次的高绩效者聚会。\n        - **业务/战略离群(不计入组织分)**：prediction markets、24 Hour Market、银行牌照取舍、活跃交易者战略、单 App 金融平台和产品发布 cadence 本身不计入组织分；只有它们落到 GM/PnL owner、AI headcount planning、非工程团队自动化权限、人才筛选和资源重排时才进入组织 Score。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Robinhood/notebook.json 的 notebook records 评分，非实时网搜；records=1035，date_fill=60.87%，blind_dims=[]，chunk_status={'RICH': 16, 'THIN': 1}。\n"
+      },
+      {
+            "rank": 10,
+            "score": "100",
+            "sortScore": 100,
+            "conf": "RICH",
+            "dir": "↑",
+            "priority": "P0",
+            "company": "Stripe",
+            "oneliner": "Stripe 的“组织操作系统”= 写作默认公开 + 极慢质量优先的人才筛 + 把金融基础设施做成可复用平台接口。它不像 Revolut 那样靠高压汰换制造组织离群，而是把复杂金融网络翻译成工程抽象、文档记忆和小团队自治；真正的 outlier 不在“高 bar / customer first”这些通用口号，而在长期运行的机制：全公司默认写下来、hiring committee 以 no-hire 为职责、支付方式和 treasury 被模块化成可并行接入的底层 rails。代价是高标准与高复杂度会外溢成部分团队的恐惧感、PIP 压力和领导层适配困难。",
+            "card": "stripe",
+            "searchText": "# Stripe — Why attention?   ·   Score 100 · 置信度 RICH · 优先级 P0\n\n        **一句话定性**：Stripe 的“组织操作系统”= 写作默认公开 + 极慢质量优先的人才筛 + 把金融基础设施做成可复用平台接口。它不像 Revolut 那样靠高压汰换制造组织离群，而是把复杂金融网络翻译成工程抽象、文档记忆和小团队自治；真正的 outlier 不在“高 bar / customer first”这些通用口号，而在长期运行的机制：全公司默认写下来、hiring committee 以 no-hire 为职责、支付方式和 treasury 被模块化成可并行接入的底层 rails。代价是高标准与高复杂度会外溢成部分团队的恐惧感、PIP 压力和领导层适配困难。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 信息透明与真相上行 ★计分 | • \"We were encouraged to write everything down and then share it with the entire company (whether it was a meaningful strategy document or a mundane user email). -----Brie Wolfson / 2022-02-02<br>我们被鼓励把所有事情写下来，然后分享给全公司，无论是重要的战略文档，还是普通的用户邮件。\"<br>• \"But I was like, all right, I’m going to publicly get up in front of the company and have failed on this goal, but we disagree. We agreed to disagree that this is possible. What’s also funny though is I was like, I think… -----Claire Hughes Johnson / 2024-02-27<br>Claire 描述自己在与 Patrick 对某个目标是否可达成有分歧后，仍会公开站到全公司面前承认目标失败，同时说明双方同意保留分歧。她说做法是“公开在所有人面前做 retro postmortem”，用 Stripe 喜欢的“学习”语言讲：我犯了什么错、会做什么不同、下一步怎么看、现在怎么到达那里。\"<br>• \"Speaker 0 所以当我说你可以点击查看是否有新的回顾文档时——其实总会有新的回顾文档。 So when I said, like, you can click in to see if there's a new retrospective, there was always a new retrospecti…\" -----Brie Wolfson | Stripe 的信息透明不是普通 all-hands 或 founder communication，而是把“写下来并默认全公司可读”做成组织基础设施：战略文档、用户邮件、retro/postmortem 都进入共享文本层，让一线事实、失败复盘和判断依据跨层级流动。<br>• 这类机制对同类金融基础设施公司有明显偏离度：在强监管、高可靠性、客户资金相关业务里，信息通常更容易被权限、职能和经理链切碎；Stripe 反而把默认写作和内部公开作为协调系统。 | A | 3 | 3 | ↑ |\n| 人才密度 ★计分 | • \"Any hiring I’m doing, I take it very seriously. I do my own reference calls. I am the first one to question, “Is this the right person?” In the hiring committee meeting. I’m not just pushing to hire. So that’s one I act… -----Claire Hughes Johnson / 2021-10-25<br>我做招聘时会亲自做 reference call，并在 hiring committee 中首先质疑“这是不是对的人”。我告诉 Stripe 的招聘人员，他们的职责是发现 no-hire；我们不只用招聘目标激励 recruiter，也衡量候选人是否留下、是否是对的人。\"<br>• \"I think maybe the biggest thing, though, was being okay taking a really long time to hire people. Being painfully persistent in doing so. It took us 6 months to hire the first two people. In the 6 months after that, we … -----Patrick Collison / 2015-11-28<br>Patrick 说 Stripe 接受花很长时间招聘：前两个人花了 6 个月，之后 6 个月只招了 3-4 人；做过 week-long trials，有些候选人不合适或一开始不愿加入。招聘第一筛选标准是质量而不是候选人的已表达兴趣，很多 Stripe 员工花了多年才招进来。\"<br>• \"But for our recruiters, from day one, when we talk about the metrics and the measurement of how we do, it is quality above quantity. So there have been times w… -----Claire Hughes Johnson / 2018-10-19<br>对招聘团队，从第一天谈指标和衡量时就是质量高于数量；有时名单上的人没有全招，他们对此很满意。Stripe 的 hiring committee 里通常由 recruiter 主持讨论，并会根据反馈总结说担心某人不合适或大家只是弱支持；真正…\"<br>• \"The biggest indicator that I could find in our time at Stripe when we had that issue was, uh, people who joined as leaders, as a, you know, executives and didn… -----Claire Hughes Johnson / 2023-04-13<br>Claire 说，在 Stripe 处理这个问题时，她能找到的最大指标是：加入的 leader/executive 如果在前三到六个月没有招到任何优秀的人，就是有问题的信号。\"<br>• \"Risk Strategist，Austin，2026-05-11，reviewId 103919380：“inconsistent expectations, anything less than best is not enough for managers, forceful fitting of curve … -----Glassdoor reviewer, Risk Strategist, Austin / 2026-05-11<br>一名风险策略员工称：期望不一致，低于 best 就不被经理接受，并且存在把员工强行拟合到 PIP 曲线的情况。\" | Stripe 的人才机制不是泛泛“高 bar”，而是把 no-hire 权力制度化：leader 亲自 reference call，hiring committee 中主动质疑是否该 hire，recruiter 的职责包括发现 no-hire，招聘团队不以填满 headcount 为唯一成功标准。<br>• 早期“6 个月只招前两人、再 6 个月只招 3-4 人”和 week-long trial 显示质量阈值真实牺牲速度；leader 入职 3-6 个月能否招到优秀人才，也被用作判断该 leader 是否有问题的早期指标。<br>• 员工侧 PIP/曲线拟合反馈说明这套高标准在部分团队转化成硬后果，保留为代价信号；它提高 C，但方向不是单纯正面。 | A | 3 | 3 | ↑↓ |\n| 康威定律/组织即产品 ★计分 | • \"**PATRICK COLLISON:** Well, we announced yesterday that we now support 125 payment methods, which I think is the most that anyone supports. But more importantly, we’ve done two things. One, we’ve built a—we’ve kind of r… -----Patrick Collison, John Collison, and Claire Hughes Johnson<br>Patrick 说 Stripe 内部重新架构了平台，以便更快增加支付方式，并能把规格说明交给 LLM 生成集成；John 将其称为支付方式的“device drivers”，并说现场已有支付方式方在用这种 driver 接入 Stripe。\"<br>• \"**PATRICK COLLISON**: An underlying treasury platform that enables us to build a lot of the core functionality in Stripe once. And then, build ingress and egress rails for different banking networks and systems in diffe… -----Patrick Collison<br>Patrick 说 Stripe 建了底层 treasury 平台，让核心功能只构建一次，再为不同国家的银行网络搭建进出 rails，但共享一个 treasury 和 liquidity 管理层；这是多年工程，正在部署到生产，使 Stripe 能在多个市场并行推进。\"<br>• \"We're all trying to impress upon people at Stripe the importance of multi-decadal abstractions. People sometimes respond to that thinking that that's some insanely lofty, implausibly ambitious hyperbola, but no, that's … -----Patrick Collison / 2024-02-21<br>Patrick 说 Stripe 试图让公司里的人理解“跨数十年的抽象”的重要性；API 设计必须考虑能否在 2044 年仍然站得住、世界如何变化仍保持一致，而不是只满足今天的需求。\"<br>• \"**Claire Hughes Johnson:**Exactly. And I think really what it was is they both had a part of their team that was doing the same thing and they were feeling dep… -----Claire Hughes Johnson / 2024-02-27<br>Claire 说，两个团队的一部分在做同一件事，同时又互相依赖，像 yin-yang 一样谁都没有完整图景；她判断需要有人掌握整个事情，因为这不是单纯重复，而是“重复加依赖”，更糟。\" | Stripe 的组织边界跟产品架构一起被重构：支付方式被抽象成类似 device drivers 的接入接口，treasury 能力被做成一次构建、多国 rails 复用的底层平台。<br>• 这不是普通 platform narrative，而是用组织接口降低每个国家、每种支付方式的重复劳动；当两个团队既重复又相互依赖时，通过 leadership intervention 做 de-duping，把端到端控制权收敛到一个 owner。 | A | 3 | 3 | ↑ |\n| 决策权与授权 | • \"There's two ways that product development happens at Stripe, tops down and bottoms up. And when you say, how do we decide what to let people at Stripe explore? There's a ton of exploration that's going on that no mandat… -----John Collison, Stripe co-founder<br>Stripe 的产品开发同时有自上而下和自下而上两种方式；对于探索什么，有大量探索没有 mandate，也没有 sign-off process。Visa 集成团队自下而上发现并预测硬件 failover，提前切换，避免客户中断；在高层约束内，具体做什么通常由团队决定。\"<br>• \"The second thing is to not treat all decisions uniformly. I think the most obvious axes to break them down on are degree of reversibility and magnitude. Things with low reversibility and great impact and magnitude, thos… -----Patrick Collison, co-founder and CEO of Stripe / 2018-05-02<br>Collison 将决策按可逆性和影响大小分类：低可逆、高影响的决策应慎重；其他象限应更灵活、更快。他还刻意让自己少做决策，认为如果 CEO 必须做某些决策，可能说明组织或制度出了问题，因此会把决策推回给应该是领域专家的人。\" | Stripe 的授权机制有明确边界：高层给战略方向和资源约束，团队在边界内可无 mandate/sign-off 做 bottom-up 探索；Visa 集成团队提前切换硬件避免 failover，是一线团队直接处理可靠性风险的例子。<br>• 决策按可逆性和影响大小分级，CEO 明确把本应由领域专家做的决策推回组织。这是有效机制，但在高成熟科技公司里不算最极端 outlier。 | A | 2 | 3 | ↑ |\n| 运营隐喻 | • \"Today, almost all services are auto-deployed and gradually rolled out. Stripe believes that automatically initiated and monitored deployments are more reliable than those “babysat” by humans. Automated rollout can also … -----Gergely Orosz / 2024-01-23<br>现在几乎所有服务都会自动部署并渐进式 rollout。Stripe 认为自动发起、自动监控的部署比由人‘看护’更可靠；自动 rollout 也可以更慢地推进，因为旁边没有急着做下一件事的工程师。\"<br>• \"Most of these services are automatically deployed, so when anybody makes any production-ready change, it just goes into production. It's meticulously and carefully orchestrated: first is just running some small sliver o… -----Patrick Collison / 2024-02-21<br>多数核心服务自动部署，生产就绪变更会进入生产，先跑小流量再逐步扩大；约每天 1000 次部署，同时达到约 99.9995% 可靠性。\" | Stripe 把高可靠金融基础设施的运营判断尽量从人工盯盘转成自动发起、自动监控、渐进 rollout；谁承担发布判断、发布速度如何受控、风险如何递增暴露，都被写进系统机制。<br>• 对同类 fintech/infra 公司而言，自动化发布不罕见，但“每天约 1000 次部署 + 99.9995% 可靠性 + 自动渐进 rollout”共同构成较强 operating design。 | A | 2 | 3 | ↑ |\n| 战略—结构匹配 | • \"And so as we think about that business, and again, what just Stripe has to do to unlock the payment system for that, we have engineers who are based in Singapore. They have built custom integrations with the local Malay… -----John Collison, Stripe co-founder<br>John Collison 说，Stripe 在新加坡有工程师，他们为马来西亚本地银行转账系统做定制集成，并与当地银行系统工程师协作；爱尔兰工程师也处理法国本地卡组织与 Visa/MasterCard 不同的问题。\"<br>• \"**The ‘Remote Hub’** is an engineering group of engineers who work fully remotely. It’s a standalone engineering hub, established in 2019 when Stripe had four engineering hubs – San Francisco, Dublin, Seattle and Singap… -----Stripe / 2023-12-12<br>Stripe 将完全远程工程师正式组织成一个独立 Remote Hub，作为继旧金山、都柏林、西雅图、新加坡之后的第五个工程 hub；官方表述称 Remote engineering hub 与实体 hub 同等地位，有只存在于 Remote hub 的专门工程团队，并设置类似实体 site lead 的 remot…\" | Stripe 的全球支付战略被组织结构承接：工程节点靠近关键支付 rail 与本地银行系统，Remote Hub 被正式等同为工程 hub，而不是把远程员工当作附属资源。<br>• 这是强执行设计，但在全球金融基础设施公司里属于合理匹配，不是最尖的离群机制。 | A | 2 | 3 | ↑ |\n| 官僚层级与span of control | • \"So this is something that Patrick and I actually really agreed on without a lot of discussion, which, you know, is not always the case. It has to do with a combination of optionality as you scale and grow and also cultu… -----Claire Hughes Johnson, former COO of Stripe / 2026-06-23<br>Claire 说，她和 Patrick 在这个问题上几乎不用讨论就一致：这关系到扩张时的可选性和文化；一旦大量使用头衔，就在释放层级和权威信号。她还说这个文化面向到今天仍在 Stripe。\"<br>• \"One funny thing that happens is new things at Stripe are almost always started by really tiny teams. I think that any announcement that you've seen from Stripe probably was a team of less than 10 people when it launched… -----John Collison, Stripe co-founder<br>Stripe 的新东西几乎总是由很小的团队启动；你看到的任何 Stripe 发布，在发布时团队大概率不到 10 人，核心孕育/开发阶段常常不到 5 人。John 认为小团队更容易快速推进，反面是大公司给一个问题堆 300 人、三年后才拿市场反馈。\" | 少 title 和小团队启动新项目是 Stripe 的真实组织偏好：它通过降低头衔信号、用 <10 人甚至 <5 人团队孕育新项目，保留扩张期 optionality。<br>• 但“小团队/少层级”在同类高质量科技公司里已经接近 table-stakes，因此只保留为支持性设计，不进入 Top-3。 | A | 1 | 2 | ↑ |\n| 一号位对组织的亲历程度 | • \"One of the most prolific publishers to Stripe’s internal blog is [CEO and cofounder,] Patrick Collison. -----David Singleton, CTO / 2024-01-23<br>Stripe 内部博客最多产的发布者之一是 CEO 兼联合创始人 Patrick Collison。\"<br>• \"We do our little weekly all-hands, we have a recurring segment of just walk the store -----John Collison / 2026-04-07<br>我们有每周 all-hands，其中有一个固定环节叫 walk the store。\" | Patrick 不是只倡导写作文化，而是亲自成为内部博客高频发布者；John 保留 weekly all-hands 的 walk the store 环节。<br>• 这是 Stripe 写作/信息系统的创始人侧落地证据，但作为独立维度不够离群，主要支撑“信息透明与真相上行”。 | A | 1 | 3 | ↑ |\n| 红旗 | • \"11. Software Engineer，Seattle，2025-10-05，reviewId 100453852：“Management's a fear machine. Question them and you're gone.” -----Glassdoor reviewer, Software Engineer, Seattle / 2025-10-05<br>11. 软件工程师，西雅图，2025-10-05，reviewId 100453852：“管理层是一台恐惧机器。质疑他们，你就会走人。”\"<br>• \"长期以来的人手不足导致Stripe出现了一些尴尬且代价高昂的故障。在2015年出现过一次三小时宕机后，亚马逊和Shopify甚至威胁要走人。但如今，可靠性成了Stripe颇为骄傲的一点：在2021年的假期期间，Stripe的工具总共只宕机了1.2秒。 -----Alex Konrad / 2026-07-01<br>原文为中文：长期人手不足曾导致 Stripe 出现代价高昂的故障；2015 年三小时宕机后，亚马逊和 Shopify 甚至威胁离开。但到 2021 年假期期间，Stripe 工具总共只宕机 1.2 秒，可靠性后来成为其骄傲。\" | 员工侧“质疑管理层会走人”和 PIP/曲线拟合反馈提示：Stripe 的高标准、强写作和高复杂度组织不一定自动产生心理安全，部分团队可能把真相上行压成恐惧。<br>• 早期可靠性故障是扩张债；后续可靠性指标改善，说明更像被工程运营机制吸收的历史债，而非当前持续失控。 | RF | 2 | 2 | ? |\n\n        - **盲区 + 下一步**：blind_dims=[]。Stripe 的材料丰富，低风险不在“信息不足”，而在把强运营实践误判为 costly deviation；人工复核应优先验证：写作默认公开是否仍覆盖高敏感决策、hiring committee 的 no-hire 权力是否仍真实、员工侧恐惧/PIP 信号是否集中在局部团队还是系统性后果。\n        - **业务/战略离群(不计入组织分)**：Stripe 的支付网络、treasury rails、AI/device-driver 式接入有强业务与产品架构离群性；本卡只在这些设计改变团队边界、授权方式和组织接口时计入组织分。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Stripe/notebook.json 的 notebook records 评分，非实时网搜；records=2144，date_fill=56.53%，blind_dims=[]，chunk_status={'RICH': 31}。\n"
+      },
+      {
+            "rank": 11,
+            "score": "15",
+            "sortScore": 15,
+            "conf": "RICH",
+            "dir": "?",
+            "priority": "Pass",
+            "company": "Chime",
+            "oneliner": "Chime 更像 fintech cohort 的 baseline operating company，而不是 costly-deviation 案例。它唯一有轻度偏离意义的组织设计，是把支付处理、账本、数据/AI 平台和工程团队边界一起内建为 ChimeCore / domain ownership：这让产品、风控、客服和交易基础设施更紧地绑定在同一套内部 stack 上。但在大规模 neobank/fintech 同辈里，核心平台内建、风险/客服平台化、AI 效率化和 customer-first 研究系统都已接近 table-stakes；Chime 没有显示出类似硬淘汰、极端授权、强制性决策闸门、奖金乘数或组织权力重分配的 outlier 机制。",
+            "card": "chime",
+            "searchText": "# Chime — Why attention?   ·   Score 15 · 置信度 RICH · 优先级 Pass\n\n        **一句话定性**：Chime 更像 fintech cohort 的 baseline operating company，而不是 costly-deviation 案例。它唯一有轻度偏离意义的组织设计，是把支付处理、账本、数据/AI 平台和工程团队边界一起内建为 ChimeCore / domain ownership：这让产品、风控、客服和交易基础设施更紧地绑定在同一套内部 stack 上。但在大规模 neobank/fintech 同辈里，核心平台内建、风险/客服平台化、AI 效率化和 customer-first 研究系统都已接近 table-stakes；Chime 没有显示出类似硬淘汰、极端授权、强制性决策闸门、奖金乘数或组织权力重分配的 outlier 机制。\n\n| 维度 | 逐字原话 / 〔事实〕(+来源) | 机制 + 偏离基线 | A/Δ | D | C | 方向 |\n        |---|---|---|:--:|:--:|:--:|:--:|\n| 康威定律/组织即产品 ★计分 | • \"ChimeCore -我們的專有支付處理器和分類帳 截至2025年11月，ChimeCore處理通過我們平台進行的所有支付、轉賬、存款、提款和其他金融交易。ChimeCore在交易處理中的角色不涉及接收或傳輸資金;相反，作爲交易處理器，ChimeCore的角色是促進交易所涉及各方之間必要的消息傳遞（例如，會員、銀行合作伙伴、參與交易的外部銀行和卡網絡），允許處理適用交易。ChimeCore還充當會員帳戶的記錄系統，跟蹤交易、餘額和其他數據。 ChimeCore使我們能夠更好地控制新金融產品的設計方式，並加快我們的產品開發速度。通過ChimeCore，我們可以靈活地直接在我們的平台上構建產品，這使我們能夠避免與第三方供應商集成的開發週期，第三方供應商通常具有預配置的產品模板。\" -----Chime Financial, Inc.<br>ChimeCore 是 Chime 的专有支付处理器和账本，处理平台上的支付、转账、存款、提款和其他金融交易，并作为会员账户的记录系统；它让 Chime 能更好控制新金融产品设计、加快产品开发，并减少第三方供应商模板和集成周期。<br>• \"> \"There are a few things that I have come to have strong opinions about... One is, teams should own their own domains, services and data. You got to own full-stack your domain. You want to minimize coordination between teams and dependencies on teams. And then something that gets often overlooked as you scale is... aligning the organization with the architecture. The organization's growing, the architecture is evolving, but you have to consciously align those two things if you want to maintain a highly functioning engineering team as you grow...” > > > - Ryan King -----Ryan King<br>Ryan King 说，团队应该拥有自己的领域、服务和数据，必须全栈拥有自己的 domain；要尽量减少团队之间的协调和依赖；随着公司和架构增长，必须有意识地让组织和架构对齐。\" | Chime 把支付处理器、账本和会员账户记录系统内建为 ChimeCore，并用 domain/service/data ownership 去对应工程团队边界。这个机制的组织含义不是“自研系统”本身，而是产品开发、交易接口、数据责任和团队边界被同一套内部 stack 约束。<br>• 偏离度是弱到中等：在 fintech 同辈里，核心平台内建和风险/客服平台化已是常见规模化路径；Chime 特别之处只在于 ChimeCore 与 “teams own domains, services and data” 的组织原则同时出现。<br>• 可信度为中等：有公司披露和 CTO 机制表达，但缺少员工侧或第三方证据证明这种 ownership 真的改变了预算权、审批权、绩效责任或团队间权力边界。 | A | 2 | 2 | ↑ |\n\n        - **盲区 + 下一步**：blind_dims=[]。当前低分不是信息不足，而是 RICH 信息下仍未看到足够特别的组织偏离。若要上调，需要补到 ChimeCore / AI / domain ownership 如何硬性改变团队权责、审批、绩效、清退或预算边界的证据。\n        - **业务/战略离群(不计入组织分)**：ChimeCore、Jade、AI support、fraud loss rate、support cost reduction、gross margin 等可以是业务/技术/运营亮点；除非它们改写组织权力和员工行为，否则不进入组织 Score。\n        - **coverage_note**：基于 /Users/zhengqi/Documents/Codex/org-research/org-notebooks/fintech-cohurt/Chime/notebook.json 的 notebook records 评分，非实时网搜；records=758，date_fill=66.75%，blind_dims=[]，chunk_status={'RICH': 11, 'THIN': 5}。\n"
+      }
+];
+    const CARD_MARKDOWN = {
+      revolut: {
+        title: "Revolut_v1.md",
+        md: REVOLUT_MD,
+        href: "../../2026-07-02/link-ui-list/outputs/Revolut_v1.md"
+      },
+      coinbase: {
+        title: "Coinbase_v1.md",
+        md: COINBASE_MD,
+        href: "../../2026-07-02/link-ui-list/outputs/Coinbase_v1.md"
+      },
+      kraken: {
+        title: "Kraken_v1.md",
+        md: KRAKEN_MD,
+        href: "../../2026-07-02/link-ui-list/outputs/Kraken_v1.md"
+      },
+      ramp: {
+        title: "Ramp_v1.md",
+        md: RAMP_MD,
+        href: "../../2026-07-02/link-ui-list/outputs/Ramp_v1.md"
+      },
+      monzo: {
+        title: "Monzo_v1.md",
+        md: MONZO_MD,
+        href: "../../2026-07-02/link-ui-list/outputs/Monzo_v1.md"
+      },
+      mercury: {
+        title: "Mercury_v1.md",
+        md: MERCURY_MD,
+        href: "../../2026-07-02/link-ui-list/outputs/Mercury_v1.md"
+      },
+      sofi: {
+        title: "SoFi_v1.md",
+        md: SOFI_MD,
+        href: "../../2026-07-02/link-ui-list/outputs/SoFi_v1.md"
+      },
+      paypal: {
+        title: "PayPal_v1.md",
+        md: PAYPAL_MD,
+        href: "../../2026-07-02/link-ui-list/outputs/PayPal_v1.md"
+      },
+      robinhood: {
+        title: "Robinhood_v1.md",
+        md: ROBINHOOD_MD,
+        href: "../../2026-07-02/link-ui-list/outputs/Robinhood_v1.md"
+      },
+      stripe: {
+        title: "Stripe_v1.md",
+        md: STRIPE_MD,
+        href: "../../2026-07-02/link-ui-list/outputs/Stripe_v1.md"
+      },
+      chime: {
+        title: "Chime_v1.md",
+        md: CHIME_MD,
+        href: "../../2026-07-02/link-ui-list/outputs/Chime_v1.md"
+      }
+    };
+    // Company-card drawer rules live here so source markdown stays untouched:
+    // hide the file/source chrome, and suppress the notebook/baseline intro note
+    // that appears between the H1 and the one-sentence qualitative readout.
+
+    const isCompactMode = new URLSearchParams(location.search).get("compact") === "1";
+    if (isCompactMode) {
+      document.body.classList.add("compact");
+    }
+    const compactMeta = document.getElementById("compactMeta");
+    const headerMeta = document.getElementById("meta");
+    const tb = document.getElementById("tb");
+    const q = document.getElementById("q");
+    let filter = "all";
+    let sortK = "rank";
+    let sortDir = 1;
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function inlineMd(value) {
+      return escapeHtml(value)
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+        .replace(/&lt;br\s*\/?&gt;/gi, "<br>");
+    }
+
+    function splitTableRow(line) {
+      let body = line.trim();
+      if (body.startsWith("|")) body = body.slice(1);
+      if (body.endsWith("|")) body = body.slice(0, -1);
+      const cells = [];
+      let current = "";
+      for (let i = 0; i < body.length; i += 1) {
+        const ch = body[i];
+        if (ch === "|" && body[i - 1] !== "\\") {
+          cells.push(current.trim().replaceAll("\\|", "|"));
+          current = "";
+        } else {
+          current += ch;
+        }
+      }
+      cells.push(current.trim().replaceAll("\\|", "|"));
+      return cells;
+    }
+
+    function isSeparator(line) {
+      return /^\s*\|?\s*:?-{2,}:?(\s*\|\s*:?-{2,}:?)*\s*\|?\s*$/.test(line);
+    }
+
+    function simplifySourceLine(segment) {
+      const text = segment.trim();
+      if (!/\s\/\s/.test(text)) return segment;
+      const parts = text.split(/\s\/\s/);
+      const speaker = parts[0].trim().replace(/\s*[\(（](?:剖析|分析)[\)）]\s*$/u, "");
+      if (!speaker) return segment;
+      if (parts.some(part => part.trim().toLowerCase() === "unknown")) return speaker;
+      const date = text.match(/\b(20\d{2}-\d{2}-\d{2}|19\d{2}-\d{2}-\d{2})\b/);
+      if (!date) return segment;
+      return `${speaker} / ${date[1]}`;
+    }
+
+    function isSourceLine(segment) {
+      const text = segment.trim();
+      if (!/\s\/\s/.test(text)) return false;
+      if (/^["“”]|^中：|^•\s*["“”]/.test(text)) return false;
+      const simplified = simplifySourceLine(text);
+      return simplified !== text || /\bunknown\b/i.test(text);
+    }
+
+    function normalizeEvidenceCell(cell) {
+      const rawParts = cell.split(/<br\s*\/?>/i).map(part => part.trim());
+      const out = [];
+      for (let i = 0; i < rawParts.length; i += 1) {
+        const part = rawParts[i];
+        if (!part) continue;
+        if (isSourceLine(part)) {
+          const source = simplifySourceLine(part);
+          let target = out.length - 1;
+          while (target >= 0 && out[target].translation) target -= 1;
+          if (target >= 0) out[target].text = `${out[target].text} -----${source}`;
+          else out.push({ text: `-----${source}`, translation: false });
+          continue;
+        }
+        const isTranslation = part.startsWith("中：");
+        let trimmed = isTranslation ? part.slice(2) : part.replace(/^\d+\.\s+/, "• ");
+        out.push({ text: trimmed, translation: isTranslation });
+      }
+      return out.map(part => part.text).join("<br>");
+    }
+
+    function normalizeTableCell(cell, columnHeader = "") {
+      if (columnHeader.trim() === "A/Δ" && cell.trim() === "Alpha") return "A";
+      const isEvidenceColumn = /逐字原话|证据/.test(columnHeader);
+      if (isEvidenceColumn) return normalizeEvidenceCell(cell);
+      return cell
+        .split(/<br\s*\/?>/i)
+        .map(part => {
+          let trimmed = part.trim();
+          if (trimmed.startsWith("中：")) trimmed = trimmed.slice(2);
+          else trimmed = simplifySourceLine(trimmed);
+          if (isEvidenceColumn) trimmed = trimmed.replace(/^\d+\.\s+/, "• ");
+          return trimmed;
+        })
+        .join("<br>");
+    }
+
+    function normalizeDimensionName(value) {
+      return (value || "").replace(/★计分/g, "").trim();
+    }
+
+    function collectOmittedOutliers(lines) {
+      const omitted = new Map();
+      for (let i = 0; i < lines.length;) {
+        if (!/^\s*\|/.test(lines[i]) || i + 1 >= lines.length || !isSeparator(lines[i + 1])) {
+          i += 1;
+          continue;
+        }
+        const header = splitTableRow(lines[i]).map(cell => cell.trim());
+        let j = i + 2;
+        const rows = [];
+        while (j < lines.length && /^\s*\|/.test(lines[j])) {
+          rows.push(splitTableRow(lines[j]));
+          j += 1;
+        }
+        const isOmittedTable =
+          header[0] === "维度" &&
+          header[1] === "机制锚点" &&
+          header[2] === "机制" &&
+          header[5] === "证据";
+        if (isOmittedTable) {
+          rows.forEach(row => {
+            const dimension = normalizeDimensionName(row[0]);
+            if (!dimension) return;
+            if (!omitted.has(dimension)) omitted.set(dimension, []);
+            omitted.get(dimension).push({ mechanism: row[2] || "", evidence: row[5] || "" });
+          });
+        }
+        i = j;
+      }
+      return omitted;
+    }
+
+    function mergeOmittedIntoDimensionRows(rows, header, omittedByDimension) {
+      const evidenceIndex = header.findIndex(cell => /逐字原话/.test(cell));
+      const mechanismIndex = header.findIndex(cell => /机制\s*\+\s*偏离基线/.test(cell));
+      if (evidenceIndex < 0 || mechanismIndex < 0 || !omittedByDimension.size) return rows;
+      return rows.map(row => {
+        const dimension = normalizeDimensionName(row[0]);
+        const additions = omittedByDimension.get(dimension);
+        if (!additions?.length) return row;
+        const next = [...row];
+        const evidenceItems = additions
+          .map(item => item.evidence?.trim())
+          .filter(Boolean)
+          .map(text => `• ${text}`);
+        const mechanismItems = additions
+          .map(item => item.mechanism?.trim())
+          .filter(Boolean)
+          .map(text => `• ${text}`);
+        if (evidenceItems.length) next[evidenceIndex] = [next[evidenceIndex], ...evidenceItems].filter(Boolean).join("<br>");
+        if (mechanismItems.length) next[mechanismIndex] = [next[mechanismIndex], ...mechanismItems].filter(Boolean).join("<br>");
+        return next;
+      });
+    }
+
+    function renderTable(lines, start, omittedByDimension) {
+      const header = splitTableRow(lines[start]);
+      let i = start + 1;
+      if (i < lines.length && isSeparator(lines[i])) i += 1;
+      const rows = [];
+      while (i < lines.length && /^\s*\|/.test(lines[i])) {
+        rows.push(splitTableRow(lines[i]));
+        i += 1;
+      }
+      const isMainDimensionTable = header[0]?.trim() === "维度" && header.some(cell => /逐字原话/.test(cell));
+      const mergedRows = isMainDimensionTable ? mergeOmittedIntoDimensionRows(rows, header, omittedByDimension) : rows;
+      const orderedRows = isMainDimensionTable
+        ? [
+            ...mergedRows.filter(row => (row[0] || "").includes("★计分")),
+            ...mergedRows.filter(row => !(row[0] || "").includes("★计分"))
+          ]
+        : mergedRows;
+      const thead = `<thead><tr>${header.map(cell => `<th>${inlineMd(cell)}</th>`).join("")}</tr></thead>`;
+      const tbody = `<tbody>${orderedRows.map(row => `<tr>${row.map((cell, index) => `<td>${inlineMd(normalizeTableCell(cell, header[index] || ""))}</td>`).join("")}</tr>`).join("")}</tbody>`;
+      return { html: `<table class="cols-${header.length}">${thead}${tbody}</table>`, next: i };
+    }
+
+    function flushParagraph(buffer, out) {
+      if (!buffer.length) return;
+      out.push(`<p>${inlineMd(buffer.join(" "))}</p>`);
+      buffer.length = 0;
+    }
+
+    function renderMarkdown(md) {
+      const lines = md.replace(/\r\n/g, "\n").split("\n");
+      const omittedByDimension = collectOmittedOutliers(lines);
+      const out = [];
+      const paragraph = [];
+      let list = [];
+      function suppressListItem(item) {
+        const text = item.trim();
+        return text.startsWith("**Score**") || text.startsWith("**baseline_note**");
+      }
+      function flushList() {
+        if (!list.length) return;
+        out.push(`<ul>${list.map(item => `<li>${inlineMd(item)}</li>`).join("")}</ul>`);
+        list = [];
+      }
+      for (let i = 0; i < lines.length;) {
+        const line = lines[i];
+        if (!line.trim()) {
+          flushParagraph(paragraph, out);
+          flushList();
+          i += 1;
+          continue;
+        }
+        if (/^\s*\|/.test(line) && i + 1 < lines.length && isSeparator(lines[i + 1])) {
+          flushParagraph(paragraph, out);
+          flushList();
+          const header = splitTableRow(line).map(cell => cell.trim());
+          const isOmittedTable =
+            header[0] === "维度" &&
+            header[1] === "机制锚点" &&
+            header[2] === "机制" &&
+            header[5] === "证据";
+          if (isOmittedTable) {
+            let next = i + 2;
+            while (next < lines.length && /^\s*\|/.test(lines[next])) next += 1;
+            i = next;
+            continue;
+          }
+          const rendered = renderTable(lines, i, omittedByDimension);
+          out.push(rendered.html);
+          i = rendered.next;
+          continue;
+        }
+        const heading = line.match(/^(#{1,3})\s+(.+)$/);
+        if (heading) {
+          flushParagraph(paragraph, out);
+          flushList();
+          const level = heading[1].length;
+          if (level === 2 && heading[2].trim() === "Notable omitted outlier designs") {
+            i += 1;
+            while (i < lines.length && !/^##\s+/.test(lines[i])) i += 1;
+            continue;
+          }
+          out.push(`<h${level}>${inlineMd(heading[2])}</h${level}>`);
+          i += 1;
+          continue;
+        }
+        if (/^\s*>\s?/.test(line)) {
+          flushParagraph(paragraph, out);
+          flushList();
+          const quote = [];
+          while (i < lines.length && /^\s*>\s?/.test(lines[i])) {
+            quote.push(lines[i].replace(/^\s*>\s?/, ""));
+            i += 1;
+          }
+          out.push(`<blockquote>${quote.map(part => `<p>${inlineMd(part)}</p>`).join("")}</blockquote>`);
+          continue;
+        }
+        const bullet = line.match(/^\s*-\s+(.+)$/);
+        if (bullet) {
+          flushParagraph(paragraph, out);
+          if (!suppressListItem(bullet[1])) list.push(bullet[1]);
+          i += 1;
+          continue;
+        }
+        flushList();
+        paragraph.push(line.trim());
+        i += 1;
+      }
+      flushParagraph(paragraph, out);
+      flushList();
+      return out.join("\n");
+    }
+
+    function stripCardIntroMeta(md) {
+      const lines = md.replace(/\r\n/g, "\n").split("\n");
+      const h1 = lines.findIndex(line => /^#\s+/.test(line));
+      if (h1 < 0) return md;
+      let i = h1 + 1;
+      while (i < lines.length && !lines[i].trim()) i += 1;
+      if (i >= lines.length || !/^\s*>\s?/.test(lines[i])) return md;
+      while (i < lines.length && /^\s*>\s?/.test(lines[i])) i += 1;
+      while (i < lines.length && !lines[i].trim()) i += 1;
+      return [...lines.slice(0, h1 + 1), "", ...lines.slice(i)].join("\n");
+    }
+    function dirClass(dir) { return dir === "↑" ? "dir up" : "dir unknown"; }
+
+    function renderRows() {
+      const term = q.value.trim().toLowerCase();
+      let list = DATA.filter(r => {
+        if (filter === "P0" && r.priority !== "P0") return false;
+        if (filter === "Pending" && r.priority !== "Pending") return false;
+        if (filter === "ready" && r.card === "pending") return false;
+        if (!term) return true;
+        return (r.company + " " + r.oneliner + " " + r.priority + " " + r.conf + " " + (r.searchText || "")).toLowerCase().includes(term);
+      });
+      list.sort((a, b) => {
+        let x = a[sortK], y = b[sortK];
+        if (typeof x === "string") { x = x.toLowerCase(); y = y.toLowerCase(); }
+        if (x < y) return -1 * sortDir;
+        if (x > y) return 1 * sortDir;
+        return a.rank - b.rank;
+      });
+      tb.innerHTML = "";
+      for (const r of list) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td class="n">${r.rank}</td>
+          <td><span class="conf">${r.conf}</span></td>
+          <td class="${dirClass(r.dir)}">${r.dir}</td>
+          <td><span class="co">${r.company}</span><span class="pri ${r.priority}">${r.priority}</span><div class="ol">${r.oneliner}</div></td>
+          <td><button class="lk" data-r="${r.rank}">${r.card !== "pending" ? "查看完整卡片 →" : "占位卡片 →"}</button></td>`;
+        tb.appendChild(tr);
+      }
+      document.getElementById("empty").style.display = list.length ? "none" : "block";
+      const metaText = `${list.length} / ${DATA.length} 家`;
+      headerMeta.textContent = metaText;
+      if (isCompactMode) compactMeta.textContent = `有多少家：${metaText}`;
+    }
+
+    function openMarkdown(title, md, href, options = {}) {
+      const displayMd = options.stripIntroMeta ? stripCardIntroMeta(md) : md;
+      const docTitle = options.hideChrome ? "" : `<div class="doc-title">${escapeHtml(title)}</div>`;
+      const actions = !options.hideChrome && href ? `<div class="actions"><a class="btn primary" href="${href}">打开源 markdown</a></div>` : "";
+      document.getElementById("mc").innerHTML = `${docTitle}${actions}<article class="markdown">${renderMarkdown(displayMd)}</article>`;
+      document.getElementById("ov").classList.add("on");
+      document.getElementById("modal").scrollTop = 0;
+    }
+
+    function openPending(record) {
+      document.getElementById("mc").innerHTML = `<div class="doc-title">${escapeHtml(record.company)}</div>
+        <article class="markdown">
+          <h1>${escapeHtml(record.company)} · Pending Step3 card</h1>
+          <p>${escapeHtml(record.oneliner)}</p>
+          <p>Costly-deviation card 尚未生成。跑完 Step3 后，把对应 <code>_card.md</code> 和 <code>_score.json</code> 放入 notebook-scored，本页即可补入完整 markdown 渲染。</p>
+        </article>`;
+      document.getElementById("ov").classList.add("on");
+      document.getElementById("modal").scrollTop = 0;
+    }
+
+    function closeCard() { document.getElementById("ov").classList.remove("on"); }
+
+    tb.addEventListener("click", event => {
+      const button = event.target.closest(".lk");
+      if (!button) return;
+      const record = DATA.find(r => String(r.rank) === button.dataset.r);
+      if (!record) return;
+      if (CARD_MARKDOWN[record.card]) {
+        const card = CARD_MARKDOWN[record.card];
+        openMarkdown(card.title, card.md, card.href, { hideChrome: true, stripIntroMeta: true });
+      } else {
+        openPending(record);
+      }
+    });
+    document.getElementById("baselineBtn").addEventListener("click", () => {
+      openMarkdown("baseline_company_portrait.md", BASELINE_MD, "../org-notebooks/fintech-cohurt/baseline-pattern-v2/baseline_company_portrait.md");
+    });
+    document.querySelectorAll(".chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        document.querySelectorAll(".chip").forEach(x => x.classList.remove("on"));
+        chip.classList.add("on");
+        filter = chip.dataset.f;
+        renderRows();
+      });
+    });
+    document.querySelectorAll("th[data-k]").forEach(th => {
+      th.addEventListener("click", () => {
+        const k = th.dataset.k;
+        if (sortK === k) sortDir *= -1;
+        else { sortK = k; sortDir = k === "company" ? 1 : -1; }
+        renderRows();
+      });
+    });
+    q.addEventListener("input", renderRows);
+    document.getElementById("x").addEventListener("click", closeCard);
+    document.getElementById("ov").addEventListener("click", event => { if (event.target.id === "ov") closeCard(); });
+    document.addEventListener("keydown", event => { if (event.key === "Escape") closeCard(); });
+    renderRows();
+  </script>
+</body>
+</html>
